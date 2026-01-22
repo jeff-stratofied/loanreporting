@@ -1329,7 +1329,7 @@ import {
   buildEarningsSchedule,
   getCanonicalCurrentEarningsRow,
   computePortfolioEarningsKPIs
-} from "../js/earningsEngine.js?v=dev";
+} from "./earningsEngine.js?v=dev";
 
   import {
   addMonths,
@@ -1338,12 +1338,12 @@ import {
   getCurrentScheduleIndex,
   buildAmortSchedule,
   isDeferredMonth
-} from "../js/loanEngine.js?v=dev";
+} from "./loanEngine.js?v=dev";
 
   import {
   normalizeOwnership,
   getUserOwnershipPct
-} from "../js/ownershipEngine.js?v=dev";
+} from "./ownershipEngine.js?v=dev";
 
 
 let earningsDataReadyResolve;
@@ -1540,7 +1540,7 @@ const TODAY = getStandardToday();
 // =====================================================
 function redirectToFullEarnings(openParam = "projected") {
   const url =
-    `/loan-dashboard/earnings/index.html` +
+    `/loanReporting/earnings.html` +
     `?user=${PAGE_USER}` +
     `&from=reporting` +
     (openParam ? `&open=${encodeURIComponent(openParam)}` : "");
@@ -2335,7 +2335,7 @@ document.querySelectorAll(".kpi").forEach(tile => {
     // ✅ IFRAME: always escape to full page, preserve which KPI was clicked
     if (isEmbed) {
       const url =
-        `/loan-dashboard/earnings/index.html` +
+        `/loanReporting/earnings.html` +
         `?user=${PAGE_USER}` +
         `&from=reporting` +
         `&open=${type}`;
@@ -4619,7 +4619,7 @@ async function initPage() {
       (e) => {
         if (e.target.closest("button, a")) return;
         window.top.location.href =
-          `/loan-dashboard/earnings/index.html?user=${PAGE_USER}&open=kpi2`;
+          `/loanReporting/earnings.html?user=${PAGE_USER}&open=kpi2`;
       },
       true
     );
@@ -6056,7 +6056,7 @@ window.addEventListener("popstate", (e) => {
   
   </script>
 
-<script src="/loan-dashboard/js/feedback.js"></script>
+<script src="/loanReporting/feedback.js"></script>
 
   
 </body>
