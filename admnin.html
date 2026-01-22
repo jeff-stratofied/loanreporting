@@ -411,9 +411,9 @@ input:focus, select:focus {
      SCRIPT: FUNCTIONALITY (from working WrongColors version)
      ========================================================= -->
 <script type="module">
-  import { loadLoans } from "/loan-dashboard/js/loadLoans.js?v=dev";
+  import { loadLoans } from "/loanReporting/loadLoans.js?v=dev";
 
-  import { normalizeOwnership } from "/loan-dashboard/js/ownershipEngine.js?v=dev";
+  import { normalizeOwnership } from "/loanReporting/ownershipEngine.js?v=dev";
 
   const USER_OPTIONS = [
   { value: "jeff", label: "Jeff Customer" },
@@ -1340,12 +1340,12 @@ if (action === "ownership") {
 
   portBtn.onclick = () => {
     const user = userSelect.value;
-    window.open(`/loan-dashboard/reporting.html?user=${user}`, '_blank');
+    window.open(`/loanReporting/reporting.html?user=${user}`, '_blank');
   };
 
 </script>
 
-<script src="/loan-dashboard/js/feedback.js"></script>
+<script src="/loanReporting/feedback.js?v=dev"></script>
   
 </body>
 </html>
