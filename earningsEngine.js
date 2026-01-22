@@ -19,7 +19,7 @@
 import {
   addMonths,
   isDeferredMonth
-} from "./loanEngine.js";
+} from "./loanEngine.js?v=dev";
 
 /* ============================================================
    Helpers (local, pure)
