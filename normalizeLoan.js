@@ -1,4 +1,4 @@
-// js/normalizeLoan.js
+// /normalizeLoan.js
 
 export function normalizeLoan(l) {
   return {
