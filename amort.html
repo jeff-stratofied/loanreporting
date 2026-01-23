@@ -1471,7 +1471,10 @@ async function init() {
   /* =====================================================
      1) LOAD + NORMALIZE DATA
      ===================================================== */
-
+// 1️⃣ Load platform config FIRST
+  await loadPlatformConfig(
+    "https://raw.githubusercontent.com/jeff-stratofied/loanreporting/main/data/platformConfig.json"
+  
   /* ---------------------------------------------------------
      DATA FREEZE POINT
      After this line:
