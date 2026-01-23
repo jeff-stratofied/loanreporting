@@ -1,0 +1,29 @@
+{
+  "fees": {
+    "setupFee": 150,
+    "monthlyServicingBps": 25
+  },
+  "users": [
+    {
+      "id": "jeff",
+      "name": "Jeff",
+      "role": "lender",
+      "feeWaiver": "none",
+      "active": true
+    },
+    {
+      "id": "nick",
+      "name": "Nick",
+      "role": "investor",
+      "feeWaiver": "none",
+      "active": true
+    },
+    {
+      "id": "john",
+      "name": "John",
+      "role": "investor",
+      "feeWaiver": "none",
+      "active": true
+    }
+  ]
+}
