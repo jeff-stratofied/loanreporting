@@ -9,6 +9,50 @@
 import { loadLoans as fetchLoans } from "./loadLoans.js";
 
 
+// ------------------------------------
+// User resolution (engine-owned truth)
+// ------------------------------------
+function resolveUserForLoan(loan) {
+  // Preferred: explicit owner on loan
+  if (loan.owner) return loan.owner;
+
+  // Fallback: single ownershipLot
+  if (
+    Array.isArray(loan.ownershipLots) &&
+    loan.ownershipLots.length === 1
+  ) {
+    return loan.ownershipLots[0].user;
+  }
+
+  // Fallback: legacy
+  return loan.user || null;
+}
+
+// ------------------------------------
+// Canonical user registry (engine-owned)
+// ------------------------------------
+const USERS = {
+  jeff: {
+    id: "jeff",
+    role: "lender",        // or "investor"
+    feeWaiver: "none"      // "none" | "setup" | "monthly" | "all"
+  },
+
+  nick: {
+    id: "nick",
+    role: "investor",
+    feeWaiver: "none"
+  },
+
+  john: {
+    id: "john",
+    role: "investor",      // set to "lender" if applicable
+    feeWaiver: "none"
+  }
+};
+
+
+
 // -------------------------------
 //  Fees and Waivers
 // -------------------------------
@@ -253,6 +297,13 @@ export function getCurrentScheduleIndex(loan, asOf = new Date()) {
     1
   );
 
+// ------------------------------------
+// Resolve user context for this loan
+// ------------------------------------
+const userId = resolveUserForLoan(loan);
+const user = userId ? USERS[userId] : null;
+
+  
   const asOfMonth = new Date(
     asOf.getFullYear(),
     asOf.getMonth(),
@@ -420,23 +471,32 @@ export function buildAmortSchedule(loan) {
       const applied = Math.min(balance, defaultRecovery);
       const isOwned = loanDate >= purchaseMonth;
 
-      const { waiveSetup, waiveMonthly } =
-        resolveFeeWaiverFlags(null, loan);
+const { waiveSetup, waiveMonthly } =
+  resolveFeeWaiverFlags(user, loan);
 
-      const isFirstOwnedMonth =
-        isOwned &&
-        loanDate.getFullYear() === purchaseMonth.getFullYear() &&
-        loanDate.getMonth() === purchaseMonth.getMonth();
 
-      const ownerIsLender = false; // Step 2
+const isFirstOwnedMonth =
+  isOwned &&
+  loanDate.getFullYear() === purchaseMonth.getFullYear() &&
+  loanDate.getMonth() === purchaseMonth.getMonth();
 
-      let feeThisMonth = 0;
-      if (isFirstOwnedMonth && ownerIsLender && !waiveSetup) {
-        feeThisMonth += SETUP_FEE_AMOUNT;
-      }
-      if (isOwned && !waiveMonthly) {
-        feeThisMonth += balance * MONTHLY_SERVICING_RATE;
-      }
+// 🔑 REAL user context
+const ownerIsLender = user?.role === "lender";
+
+// 🔑 User-level waiver overrides loan-level waiver
+const { waiveSetup, waiveMonthly } =
+  resolveFeeWaiverFlags(user, loan);
+
+let feeThisMonth = 0;
+
+if (isFirstOwnedMonth && ownerIsLender && !waiveSetup) {
+  feeThisMonth += SETUP_FEE_AMOUNT;
+}
+
+if (isOwned && !waiveMonthly) {
+  feeThisMonth += balance * MONTHLY_SERVICING_RATE;
+}
+
 
       schedule.push(
         normalizeDeferralFlags({
@@ -498,8 +558,10 @@ export function buildAmortSchedule(loan) {
         }
       });
 
-      const isOwned = loanDate >= purchaseMonth;
-      const { waiveMonthly } = resolveFeeWaiverFlags(null, loan);
+const isOwned = loanDate >= purchaseMonth;
+const { waiveMonthly } =
+  resolveFeeWaiverFlags(user, loan);
+
 
       let feeThisMonth = 0;
       if (isOwned && !waiveMonthly) {
@@ -584,24 +646,30 @@ export function buildAmortSchedule(loan) {
 
     principalPaid += prepaymentThisMonth;
 
-    const isOwned = loanDate >= purchaseMonth;
-    const { waiveSetup, waiveMonthly } =
-      resolveFeeWaiverFlags(null, loan);
+const isOwned = loanDate >= purchaseMonth;
 
-    const isFirstOwnedMonth =
-      isOwned &&
-      loanDate.getFullYear() === purchaseMonth.getFullYear() &&
-      loanDate.getMonth() === purchaseMonth.getMonth();
+const isFirstOwnedMonth =
+  isOwned &&
+  loanDate.getFullYear() === purchaseMonth.getFullYear() &&
+  loanDate.getMonth() === purchaseMonth.getMonth();
 
-    const ownerIsLender = false; // Step 2
+// 🔑 REAL user context
+const ownerIsLender = user?.role === "lender";
 
-    let feeThisMonth = 0;
-    if (isFirstOwnedMonth && ownerIsLender && !waiveSetup) {
-      feeThisMonth += SETUP_FEE_AMOUNT;
-    }
-    if (isOwned && !waiveMonthly) {
-      feeThisMonth += balance * MONTHLY_SERVICING_RATE;
-    }
+// 🔑 User-level waiver overrides loan-level waiver
+const { waiveSetup, waiveMonthly } =
+  resolveFeeWaiverFlags(user, loan);
+
+let feeThisMonth = 0;
+
+if (isFirstOwnedMonth && ownerIsLender && !waiveSetup) {
+  feeThisMonth += SETUP_FEE_AMOUNT;
+}
+
+if (isOwned && !waiveMonthly) {
+  feeThisMonth += balance * MONTHLY_SERVICING_RATE;
+}
+
 
     schedule.push(
       normalizeDeferralFlags({
