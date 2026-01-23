@@ -481,22 +481,30 @@ const isFirstOwnedMonth =
   loanDate.getMonth() === purchaseMonth.getMonth();
 
 // 🔑 REAL user context
-const ownerIsLender = user?.role === "lender";
+{
+  const isOwned = loanDate >= purchaseMonth;
 
-let feeThisMonth = 0;
+  const isFirstOwnedMonth =
+    isOwned &&
+    loanDate.getFullYear() === purchaseMonth.getFullYear() &&
+    loanDate.getMonth() === purchaseMonth.getMonth();
 
-if (isFirstOwnedMonth && ownerIsLender && !waiveSetup) {
-  feeThisMonth += SETUP_FEE_AMOUNT;
-}
+  const ownerIsLender = user?.role === "lender";
+  const { waiveSetup, waiveMonthly } =
+    resolveFeeWaiverFlags(user, loan);
 
-if (isOwned && !waiveMonthly) {
-  feeThisMonth += balance * MONTHLY_SERVICING_RATE;
-}
+  let feeThisMonth = 0;
 
+  if (isFirstOwnedMonth && ownerIsLender && !waiveSetup) {
+    feeThisMonth += SETUP_FEE_AMOUNT;
+  }
 
+  if (isOwned && !waiveMonthly) {
+    feeThisMonth += balance * MONTHLY_SERVICING_RATE;
+  }
 
-      schedule.push(
-        normalizeDeferralFlags({
+  schedule.push(
+    normalizeDeferralFlags({
           monthIndex: schedule.length + 1,
           loanDate,
           displayDate: new Date(loanDate.getFullYear(), loanDate.getMonth(), 1),
@@ -518,8 +526,9 @@ if (isOwned && !waiveMonthly) {
           isTerminal: true,
           recovery: +applied.toFixed(2),
           contractualMonth: i + 1
-        })
-      );
+      })
+  );
+}
 
       break;
     }
@@ -555,18 +564,18 @@ if (isOwned && !waiveMonthly) {
         }
       });
 
-const isOwned = loanDate >= purchaseMonth;
-const { waiveMonthly } =
-  resolveFeeWaiverFlags(user, loan);
+{
+  const isOwned = loanDate >= purchaseMonth;
+  const { waiveMonthly } =
+    resolveFeeWaiverFlags(user, loan);
 
+  let feeThisMonth = 0;
+  if (isOwned && !waiveMonthly) {
+    feeThisMonth += balance * MONTHLY_SERVICING_RATE;
+  }
 
-      let feeThisMonth = 0;
-      if (isOwned && !waiveMonthly) {
-        feeThisMonth += balance * MONTHLY_SERVICING_RATE;
-      }
-
-      schedule.push(
-        normalizeDeferralFlags({
+  schedule.push(
+    normalizeDeferralFlags({
           monthIndex: schedule.length + 1,
           loanDate,
           displayDate: new Date(loanDate.getFullYear(), loanDate.getMonth(), 1),
@@ -590,7 +599,8 @@ const { waiveMonthly } =
 
           contractualMonth: i + 1
         })
-      );
+  );
+}
 
       deferralRemaining--;
       calendarDate = addMonths(calendarDate, 1);
@@ -643,33 +653,30 @@ const { waiveMonthly } =
 
     principalPaid += prepaymentThisMonth;
 
-const isOwned = loanDate >= purchaseMonth;
+{
+  const isOwned = loanDate >= purchaseMonth;
 
-const isFirstOwnedMonth =
-  isOwned &&
-  loanDate.getFullYear() === purchaseMonth.getFullYear() &&
-  loanDate.getMonth() === purchaseMonth.getMonth();
+  const isFirstOwnedMonth =
+    isOwned &&
+    loanDate.getFullYear() === purchaseMonth.getFullYear() &&
+    loanDate.getMonth() === purchaseMonth.getMonth();
 
-// 🔑 REAL user context
-const ownerIsLender = user?.role === "lender";
+  const ownerIsLender = user?.role === "lender";
+  const { waiveSetup, waiveMonthly } =
+    resolveFeeWaiverFlags(user, loan);
 
-// 🔑 User-level waiver overrides loan-level waiver
-const { waiveSetup, waiveMonthly } =
-  resolveFeeWaiverFlags(user, loan);
+  let feeThisMonth = 0;
 
-let feeThisMonth = 0;
+  if (isFirstOwnedMonth && ownerIsLender && !waiveSetup) {
+    feeThisMonth += SETUP_FEE_AMOUNT;
+  }
 
-if (isFirstOwnedMonth && ownerIsLender && !waiveSetup) {
-  feeThisMonth += SETUP_FEE_AMOUNT;
-}
+  if (isOwned && !waiveMonthly) {
+    feeThisMonth += balance * MONTHLY_SERVICING_RATE;
+  }
 
-if (isOwned && !waiveMonthly) {
-  feeThisMonth += balance * MONTHLY_SERVICING_RATE;
-}
-
-
-    schedule.push(
-      normalizeDeferralFlags({
+  schedule.push(
+    normalizeDeferralFlags({
         monthIndex: schedule.length + 1,
         loanDate,
         displayDate: new Date(loanDate.getFullYear(), loanDate.getMonth(), 1),
@@ -693,7 +700,8 @@ if (isOwned && !waiveMonthly) {
 
         contractualMonth: i + 1
       })
-    );
+  );
+}
 
     calendarDate = addMonths(calendarDate, 1);
     i++;
