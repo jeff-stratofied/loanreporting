@@ -56,9 +56,9 @@ const USERS = {
 // -------------------------------
 //  Fees and Waivers
 // -------------------------------
-const SETUP_FEE_AMOUNT = 150;
-const ANNUAL_SERVICING_BPS = 0.0025;
-const MONTHLY_SERVICING_RATE = ANNUAL_SERVICING_BPS / 12;
+function getMonthlyServicingRate(feeConfig) {
+  return (Number(feeConfig.monthlyServicingBps || 0) / 10000);
+}
 
 function resolveFeeWaiverFlags(user, loan) {
   const userWaiver = user?.feeWaiver || "none";
@@ -406,6 +406,14 @@ const user =
     purchase.getMonth(),
     1
   );
+
+  const feeConfig =
+  loan.feeConfig ||
+  GLOBAL_FEE_CONFIG ||
+  { setupFee: 150, monthlyServicingBps: 25 };
+
+const SETUP_FEE_AMOUNT = Number(feeConfig.setupFee || 0);
+const MONTHLY_SERVICING_RATE = getMonthlyServicingRate(feeConfig);
 
   
   // -------------------------------
