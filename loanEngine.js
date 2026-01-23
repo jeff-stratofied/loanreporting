@@ -56,6 +56,14 @@ const USERS = {
 // -------------------------------
 //  Fees and Waivers
 // -------------------------------
+// ===============================
+// Platform Configuration (GLOBAL)
+// ===============================
+let GLOBAL_FEE_CONFIG = null;
+let USERS = {};
+
+
+
 function getMonthlyServicingRate(feeConfig) {
   return (Number(feeConfig.monthlyServicingBps || 0) / 10000);
 }
@@ -102,6 +110,39 @@ function parseISODateLocal(iso) {
   throw new Error(
     `[parseISODateLocal] Unsupported date input: ${String(iso)}`
   );
+}
+
+// ------------------------------------
+// Load platform config (fees + users)
+// ------------------------------------
+export async function loadPlatformConfig(url) {
+  const res = await fetch(url);
+  if (!res.ok) {
+    throw new Error(`Failed to load platform config: ${res.status}`);
+  }
+
+  const cfg = await res.json();
+
+  // Fees
+  GLOBAL_FEE_CONFIG = cfg.fees || {
+    setupFee: 150,
+    monthlyServicingBps: 25
+  };
+
+  // Users (map by id)
+  USERS = {};
+  (cfg.users || []).forEach(u => {
+    if (!u?.id) return;
+    USERS[u.id] = {
+      id: u.id,
+      name: u.name || u.id,
+      role: u.role || "investor",
+      feeWaiver: u.feeWaiver || "none",
+      active: u.active !== false
+    };
+  });
+
+  return { fees: GLOBAL_FEE_CONFIG, users: USERS };
 }
 
 
