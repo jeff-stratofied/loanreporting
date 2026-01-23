@@ -1325,7 +1325,7 @@ if (CAME_FROM_REPORTING) {
     sessionStorage.removeItem("handledReportingEntry");
 
     window.location.href =
-      "/loanReporting/reporting?user=" + PAGE_CONTEXT.user;
+      "/loanreporting/reporting?user=" + PAGE_CONTEXT.user;
   });
 }
 
@@ -2634,7 +2634,7 @@ function renderAndWirePage() {
     // IFRAME / REPORTING → redirect to full page
     if (PAGE_CONTEXT.isEmbed) {
       const url = new URL(
-        window.location.origin + "/loanReporting/amort.html"
+        window.location.origin + "/loanreporting/amort.html"
       );
       url.searchParams.set("user", PAGE_CONTEXT.user);
       url.searchParams.set("from", "reporting");
@@ -4946,7 +4946,7 @@ document.addEventListener("DOMContentLoaded", async () => {
 // =====================================================
 if (PAGE_CONTEXT.isEmbed) {
   const user = PAGE_CONTEXT.user;
-  const baseUrl = `/loanReporting/amort.html?user=${user}`;
+  const baseUrl = `/loanreporting/amort.html?user=${user}`;
 
   function redirectToFullPage() {
     let url = baseUrl;
@@ -4985,7 +4985,7 @@ if (PAGE_CONTEXT.isEmbed) {
     
 </script>
 
-<script src="/loanReporting/feedback.js?v=dev"></script>
+<script src="/loanreporting/feedback.js?v=dev"></script>
 
   
 </body>
