@@ -1325,6 +1325,9 @@ tr.row-hover {
   
 
 <script type="module">
+console.log("TOP OF EARNINGS MODULE");
+
+  
 import {
   buildEarningsSchedule,
   getCanonicalCurrentEarningsRow,
@@ -4528,6 +4531,7 @@ function updateSortSelectFromTable(key, dir) {
   sortEl.value = `${base}_${dir === -1 ? "desc" : "asc"}`;
 }
 
+console.log("ABOUT TO DEFINE initPage");
 
 
 async function initPage() {
@@ -4649,6 +4653,8 @@ async function initPage() {
     );
   }
 }
+
+  console.log("DEFINED initPage");
 
 
 /* =========================
