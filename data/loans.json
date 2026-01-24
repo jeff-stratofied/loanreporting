@@ -2,7 +2,6 @@
   "loans": [
     {
       "loanName": "PSU 2024 8.83",
-      "visible": true,
       "school": "Penn State",
       "loanStartDate": "2024-01-31",
       "principal": 11000,
@@ -41,7 +40,6 @@
     },
     {
       "loanName": "OSU 2024 8.00",
-      "visible": true,
       "school": "Ohio State",
       "loanStartDate": "2024-02-01",
       "principal": 7500,
@@ -74,7 +72,6 @@
     },
     {
       "loanName": "PIT 2024 8.25",
-      "visible": true,
       "school": "Pitt",
       "loanStartDate": "2024-03-15",
       "principal": 12000,
@@ -106,7 +103,6 @@
     },
     {
       "loanName": "UCLA 2025 7.30",
-      "visible": true,
       "school": "UCLA",
       "loanStartDate": "2025-01-31",
       "principal": 7500,
@@ -126,7 +122,6 @@
     },
     {
       "loanName": "USC 2025 7.90",
-      "visible": true,
       "school": "USC",
       "loanStartDate": "2025-02-10",
       "principal": 9000,
@@ -153,7 +148,6 @@
     },
     {
       "loanName": "PSU 2025 8.10",
-      "visible": true,
       "school": "Penn State",
       "loanStartDate": "2025-03-01",
       "principal": 8500,
@@ -173,7 +167,6 @@
     },
     {
       "loanName": "NYU 2025 8.70",
-      "visible": true,
       "school": "NYU",
       "loanStartDate": "2025-04-05",
       "principal": 8200,
@@ -199,7 +192,6 @@
     },
     {
       "loanName": "PSU 2024 9.00",
-      "visible": true,
       "school": "Penn State",
       "loanStartDate": "2025-01-01",
       "principal": 7000,
@@ -219,7 +211,6 @@
     },
     {
       "loanName": "USC 2025 7.90",
-      "visible": true,
       "school": "USC",
       "loanStartDate": "2025-02-10",
       "principal": 9000,
@@ -239,7 +230,6 @@
     },
     {
       "loanName": "MICH 2024 12.00",
-      "visible": true,
       "school": "Michigan",
       "loanStartDate": "2024-10-15",
       "principal": 11000,
@@ -259,7 +249,6 @@
     },
     {
       "loanName": "CMU 2024 9.00",
-      "visible": true,
       "school": "Carnegie Mellon",
       "loanStartDate": "2024-02-01",
       "principal": 7000,
@@ -286,7 +275,6 @@
     },
     {
       "loanName": "AMU 2024 8.50",
-      "visible": true,
       "school": "Ave Maria University",
       "loanStartDate": "2024-06-04",
       "principal": 12000,
@@ -313,7 +301,6 @@
     },
     {
       "loanName": "MICH 2024 9.00",
-      "visible": true,
       "school": "Michigan",
       "loanStartDate": "2024-07-31",
       "principal": 5000,
@@ -345,7 +332,6 @@
     },
     {
       "loanName": "MICH 2025 8.50",
-      "visible": true,
       "school": "Michigan",
       "loanStartDate": "2025-03-20",
       "principal": 5500,
@@ -372,7 +358,6 @@
     },
     {
       "loanName": "NYU 2025 8.70",
-      "visible": true,
       "school": "NYU",
       "loanStartDate": "2025-04-05",
       "principal": 8200,
@@ -405,7 +390,6 @@
     },
     {
       "loanName": "CMU 2024 9.00",
-      "visible": true,
       "school": "Carnegie Mellon",
       "loanStartDate": "2025-06-02",
       "principal": 6000,
@@ -431,7 +415,6 @@
     },
     {
       "loanName": "WCC 2014 5.00",
-      "visible": true,
       "school": "Wyoming Catholic College",
       "loanStartDate": "2014-06-01",
       "principal": 22000,
@@ -451,7 +434,6 @@
     },
     {
       "loanName": "WCC 2017 5.00",
-      "visible": true,
       "school": "Wyoming Catholic College",
       "loanStartDate": "2017-01-01",
       "principal": 20000,
@@ -471,7 +453,6 @@
     },
     {
       "loanName": "WCC 2017 5.50",
-      "visible": true,
       "school": "Wyoming Catholic College",
       "loanStartDate": "2017-01-01",
       "principal": 20000,
@@ -498,7 +479,6 @@
     },
     {
       "loanName": "WCC 2017 6.00",
-      "visible": true,
       "school": "Wyoming Catholic College",
       "loanStartDate": "2017-01-01",
       "principal": 20000,
@@ -525,7 +505,6 @@
     },
     {
       "loanName": "AMU 2026 9.00",
-      "visible": true,
       "school": "Ave Maria University",
       "loanStartDate": "2026-01-01",
       "principal": 7000,
@@ -545,7 +524,6 @@
     },
     {
       "loanName": "AMU 2026 9.50",
-      "visible": true,
       "school": "Ave Maria University",
       "loanStartDate": "2026-01-01",
       "principal": 6000,
@@ -565,7 +543,6 @@
     },
     {
       "loanName": "AMU 2026 10.0",
-      "visible": true,
       "school": "Ave Maria University",
       "loanStartDate": "2026-01-01",
       "principal": 9000,
@@ -591,7 +568,6 @@
     },
     {
       "loanName": "TTCH 2026 11.0",
-      "visible": true,
       "school": "Texas Tech University",
       "loanStartDate": "2026-01-01",
       "principal": 6500,
@@ -611,7 +587,6 @@
     },
     {
       "loanName": "TTCH 2026 7.50",
-      "visible": true,
       "school": "Texas Tech University",
       "loanStartDate": "2026-01-01",
       "principal": 5400,
@@ -637,7 +612,6 @@
     },
     {
       "loanName": "TTCH 2026 9.50",
-      "visible": true,
       "school": "Texas Tech University",
       "loanStartDate": "2026-01-01",
       "principal": 7600,
@@ -657,7 +631,6 @@
     },
     {
       "loanName": "OSU 2026 8.90",
-      "visible": true,
       "school": "Ohio State",
       "loanStartDate": "2026-01-01",
       "principal": 12000,
