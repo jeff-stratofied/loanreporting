@@ -1199,7 +1199,7 @@ document.getElementById("cfg-monthly-bps").onchange = e => {
 };
 
 
-window.saveToBackend = async function saveToBackend() {
+window.loadFromBackend = async function loadFromBackend() {
   status.textContent = "Loading…";
 
   try {
@@ -1212,7 +1212,7 @@ window.saveToBackend = async function saveToBackend() {
       throw new Error(`Load failed: ${res.status}`);
     }
 
-    const data = await res.json();   // ✅ THIS WAS MISSING
+    const data = await res.json();
 
     currentLoans = data.loans.map(normalizeLoan);
     currentSha = data.sha;
@@ -1223,7 +1223,8 @@ window.saveToBackend = async function saveToBackend() {
     console.error("[ADMIN] loadFromBackend failed", e);
     status.textContent = "Load failed";
   }
-}
+};
+
 
 
 /* Save to Worker */
