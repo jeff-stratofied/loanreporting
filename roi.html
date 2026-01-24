@@ -3646,6 +3646,8 @@ async function initROI() {
   await loadPlatformConfig(
     "https://raw.githubusercontent.com/jeff-stratofied/loanreporting/main/data/platformConfig.json"
 );
+
+ await loadLoans();
   
   const formatLoanLabel = (loan) =>
     `Loan ${loan.id} — ${loan.name} (${loan.school})`;
