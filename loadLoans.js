@@ -15,22 +15,26 @@ export async function loadLoans() {
 
     if (!res.ok) {
       console.error("Fetch failed:", res.status, res.statusText);
-      return { loans: [], sha: null };
+      return [];
     }
 
     const data = await res.json();
 
     // Worker returns: { loans:[...], sha:"..." }
     if (Array.isArray(data.loans)) {
-      return data;        // <-- CORRECT
-    }
+      // expose sha for save flows / debugging
+  window.__LOANS_SHA__ = data.sha || null;
+
+  // ALWAYS return array
+  return data.loans;
+}
 
     console.warn("Unexpected API shape:", data);
-    return { loans: [], sha: null };
+    return [];
 
   } catch (err) {
     console.error("API error:", err);
-    return { loans: [], sha: null };
+    return [];
   }
 }
 
