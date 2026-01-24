@@ -365,6 +365,46 @@ input:focus, select:focus {
 <div id="status" class="pill">Idle</div>
 
 <!-- =========================================================
+     PLATFORM CONFIG
+     ========================================================= -->
+<div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-bottom:18px">
+
+  <!-- FEES -->
+  <div class="card" style="background:var(--card);padding:14px;border-radius:12px;box-shadow:var(--shadow)">
+    <h3 style="margin-top:0">Platform Fees</h3>
+
+    <label class="sub">Setup Fee ($)</label>
+    <input id="cfg-setup-fee" type="number" step="1">
+
+    <label class="sub" style="margin-top:10px">Monthly Servicing Fee (bps)</label>
+    <input id="cfg-monthly-bps" type="number" step="1">
+  </div>
+
+  <!-- USERS -->
+  <div class="card" style="background:var(--card);padding:14px;border-radius:12px;box-shadow:var(--shadow)">
+    <h3 style="margin-top:0">Users & Roles</h3>
+
+    <div id="user-list"></div>
+
+    <hr style="border-color:var(--border);margin:10px 0">
+
+    <input id="new-user-id" placeholder="user id (e.g. sarah)">
+    <input id="new-user-name" placeholder="Display name">
+
+    <select id="new-user-role">
+      <option value="customer">Customer</option>
+      <option value="lender">Lender</option>
+      <option value="investor">Investor</option>
+      <option value="admin">Admin</option>
+    </select>
+
+    <button id="add-user-btn" style="margin-top:8px">+ Add User</button>
+  </div>
+
+</div>
+
+  
+<!-- =========================================================
      TOP BUTTONS (ADD ROW + SAVE)
      ========================================================= -->
 <div style="margin: 16px 0; display: flex; gap: 10px;">
@@ -413,6 +453,10 @@ input:focus, select:focus {
   import { loadLoans } from "/loanreporting/loadLoans.js?v=dev";
 
   import { normalizeOwnership } from "/loanreporting/ownershipEngine.js?v=dev";
+
+  import { loadPlatformConfig, savePlatformConfig, PLATFORM_CONFIG } 
+  from "/loanreporting/platformConfig.js?v=dev";
+
 
   const USER_OPTIONS = [
   { value: "jeff", label: "Jeff Customer" },
@@ -1062,6 +1106,83 @@ obj.ownershipLots = Array.isArray(existing?.ownershipLots)
   
     /* Load from Worker */
   const status = document.getElementById("status");
+
+  await loadPlatformConfig(
+  "https://raw.githubusercontent.com/jeff-stratofied/loanreporting/main/data/platformConfig.json"
+);
+
+renderPlatformConfig();
+
+  function renderPlatformConfig() {
+  // Fees
+  document.getElementById("cfg-setup-fee").value =
+    PLATFORM_CONFIG.fees.setupFee;
+
+  document.getElementById("cfg-monthly-bps").value =
+    PLATFORM_CONFIG.fees.monthlyServicingBps;
+
+  // Users
+  const list = document.getElementById("user-list");
+  list.innerHTML = "";
+
+  Object.entries(PLATFORM_CONFIG.users).forEach(([id, u]) => {
+    const row = document.createElement("div");
+    row.style.cssText = "display:grid;grid-template-columns:1fr 120px auto;gap:6px;margin-bottom:6px";
+
+    row.innerHTML = `
+      <div>${u.name} <span style="color:var(--muted)">(${id})</span></div>
+      <select data-user="${id}">
+        ${["customer","lender","investor","admin"].map(r =>
+          `<option ${u.role===r?"selected":""}>${r}</option>`
+        ).join("")}
+      </select>
+      <button data-del="${id}">✕</button>
+    `;
+
+    list.appendChild(row);
+  });
+}
+
+  document.getElementById("cfg-setup-fee").onchange = e => {
+  PLATFORM_CONFIG.fees.setupFee = Number(e.target.value);
+  savePlatformConfig();
+};
+
+document.getElementById("cfg-monthly-bps").onchange = e => {
+  PLATFORM_CONFIG.fees.monthlyServicingBps = Number(e.target.value);
+  savePlatformConfig();
+};
+
+  document.getElementById("user-list").onclick = e => {
+  if (e.target.tagName === "SELECT") {
+    const id = e.target.dataset.user;
+    PLATFORM_CONFIG.users[id].role = e.target.value;
+    savePlatformConfig();
+  }
+
+  if (e.target.dataset.del) {
+    const id = e.target.dataset.del;
+    if (!confirm(`Delete user ${id}?`)) return;
+    delete PLATFORM_CONFIG.users[id];
+    savePlatformConfig();
+    renderPlatformConfig();
+  }
+};
+
+  document.getElementById("add-user-btn").onclick = () => {
+  const id = document.getElementById("new-user-id").value.trim();
+  const name = document.getElementById("new-user-name").value.trim();
+  const role = document.getElementById("new-user-role").value;
+
+  if (!id || !name) return alert("Missing user id or name");
+  if (PLATFORM_CONFIG.users[id]) return alert("User already exists");
+
+  PLATFORM_CONFIG.users[id] = { name, role };
+
+  savePlatformConfig();
+  renderPlatformConfig();
+};
+
 
 async function loadFromBackend() {
   status.textContent = "Loading…";
