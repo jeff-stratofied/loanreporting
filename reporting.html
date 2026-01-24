@@ -507,11 +507,9 @@
         const userSelect = document.getElementById('userSelect');
         const currentUserDisplay = document.getElementById('currentUserDisplay');
 
-        const displayNames = {
-            "jeff": "Jeff Customer",
-            "nick": "Nick Lender",
-            "john": "John Investor"
-        };
+        let USERS = {};          // keyed by userId
+let USER_LIST = [];     // array for dropdown
+
 
     
 // ===================================================
@@ -526,12 +524,30 @@
 // 3. USER STATE & URL MANAGEMENT
 // ===================================================
 
-        function getActiveUser() {
-            const params = new URLSearchParams(location.search);
-            let user = params.get("user");
-            if (!user || !displayNames.hasOwnProperty(user)) user = "jeff"; // Default to Jeff Customer
-            return user;
-        }
+    async function loadReportingUsers() {
+  const res = await fetch(
+    "https://raw.githubusercontent.com/jeff-stratofied/loanreporting/main/data/platformConfig.json"
+  );
+  if (!res.ok) throw new Error("Failed to load platform users");
+
+  const cfg = await res.json();
+  USERS = cfg.users || {};
+  USER_LIST = Object.values(USERS);
+}
+
+      
+      
+      function getActiveUser() {
+  const params = new URLSearchParams(location.search);
+  let user = params.get("user");
+
+  if (!user || !USERS[user]) {
+    user = USER_LIST[0]?.id || "jeff"; // safe fallback
+  }
+
+  return user;
+}
+
 
         function setActiveUser(user) {
             const url = new URL(location.href);
@@ -539,10 +555,35 @@
             history.replaceState({}, "", url);
         }
 
-        function updateDisplay(user) {      
-            currentUserDisplay.textContent = displayNames[user];
-            userSelect.value = user;
-        }
+        function updateDisplay(user) {
+  currentUserDisplay.textContent =
+    USERS[user]?.name || user;
+
+  userSelect.value = user;
+}
+
+      function populateUserDropdown() {
+  userSelect.innerHTML = "";
+
+  USER_LIST.forEach(u => {
+    const opt = document.createElement("option");
+    opt.value = u.id;
+    opt.textContent = u.name || u.id;
+    userSelect.appendChild(opt);
+  });
+}
+
+      (async function initReporting() {
+  await loadReportingUsers();
+
+  populateUserDropdown();
+
+  const user = getActiveUser();
+  setActiveUser(user);
+  updateDisplay(user);
+  buildFrames(user);
+})();
+
 
     
 // ===================================================
