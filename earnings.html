@@ -4515,6 +4515,11 @@ function updateSortSelectFromTable(key, dir) {
 
 
 async function initPage() {
+ // 1️⃣ Load platform config FIRST
+  await loadPlatformConfig(
+    "https://raw.githubusercontent.com/jeff-stratofied/loanreporting/main/data/platformConfig.json"
+);
+  
   // 1️⃣ Load + normalize data
   await loadLoansFromBackend();
   rebuildLoansWithEarnings();
