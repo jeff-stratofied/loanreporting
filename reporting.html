@@ -565,11 +565,12 @@ let USER_LIST = [];     // array for dropdown
 }
 
 
-        function setActiveUser(user) {
-            const url = new URL(location.href);
-            url.searchParams.set("user", user);
-            history.replaceState({}, "", url);
-        }
+function setActiveUser(user) {
+  const url = new URL(location.href);
+  url.searchParams.set("user", user);
+  window.location.href = url.toString();
+}
+
 
         function updateDisplay(user) {
   currentUserDisplay.textContent =
