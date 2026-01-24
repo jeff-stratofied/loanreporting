@@ -1487,13 +1487,22 @@ async function init() {
   /* =====================================================
      1) LOAD + NORMALIZE DATA
      ===================================================== */
-// 1️⃣ Load platform config FIRST
+
+  // 1️⃣ Load platform config FIRST
   await loadPlatformConfig(
     "https://raw.githubusercontent.com/jeff-stratofied/loanreporting/main/data/platformConfig.json"
-);
+  );
 
-   await loadLoans();
-  
+  // 2️⃣ LOAD LOANS AND STORE THEM
+  const loans = await loadLoans();
+
+  window.allLoans = Array.isArray(loans) ? loans : [];
+
+  if (!window.allLoans.length) {
+    console.warn("No loans loaded — aborting init");
+    return;
+  }
+
   /* ---------------------------------------------------------
      DATA FREEZE POINT
      After this line:
@@ -1501,6 +1510,7 @@ async function init() {
      - currentLoans
      MUST NOT be mutated
      --------------------------------------------------------- */
+
   await loadAndNormalizeLoans();
 
   /* =====================================================
