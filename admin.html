@@ -460,6 +460,11 @@ input:focus, select:focus {
   PLATFORM_CONFIG
 } from "/loanreporting/platformConfig.js";
 
+
+const CONFIG_URL =
+  "https://raw.githubusercontent.com/jeff-stratofied/loanreporting/main/data/platformConfig.json";
+
+  
 await loadPlatformConfig(CONFIG_URL);
 
 // mutate + save
