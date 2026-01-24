@@ -30,15 +30,27 @@ export async function loadPlatformConfig(url) {
 // Save platform config back to GitHub
 // (ADMIN ONLY)
 // ----------------------------------
+// ----------------------------------
+// Save platform config (ADMIN ONLY)
+// ----------------------------------
 export async function savePlatformConfig() {
-  if (!window.saveToBackend) {
-    console.warn("saveToBackend not available (read-only page)");
+  if (!PLATFORM_CONFIG._saveEndpoint) {
+    console.warn("Platform config is read-only on this page");
     return;
   }
 
-  return window.saveToBackend(
-    "platformConfig.json",
-    JSON.stringify(PLATFORM_CONFIG, null, 2),
-    "Update platform config"
-  );
+  const res = await fetch(PLATFORM_CONFIG._saveEndpoint, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({
+      path: PLATFORM_CONFIG._path,
+      content: JSON.stringify(PLATFORM_CONFIG, null, 2),
+      message: "Update platform config"
+    })
+  });
+
+  if (!res.ok) {
+    throw new Error(`Failed to save platform config: ${res.status}`);
+  }
 }
+
