@@ -476,11 +476,11 @@ input:focus, select:focus {
   loadPlatformConfig,
   savePlatformConfig,
   PLATFORM_CONFIG
-} from "/loanreporting/platformConfig.js";
+} from "/loanreporting/platformConfig.js?v=dev";
 
 
 const CONFIG_URL =
-  "https://raw.githubusercontent.com/jeff-stratofied/loanreporting/main/data/platformConfig.json";
+  "https://raw.githubusercontent.com/jeff-stratofied/loanreporting/main/data/platformConfig.json?v=dev";
 
 
   const USER_OPTIONS = [
@@ -1395,7 +1395,7 @@ async function savePlatformConfigToBackend() {
   };
 
   const res = await fetch(
-    "https://loanreporting-api.jeff-263.workers.dev/config",
+    "https://loanreporting-api.jeff-263.workers.dev/platformConfig",
     {
       method: "POST",
       headers: { "Content-Type": "application/json" },
