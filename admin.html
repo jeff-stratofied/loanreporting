@@ -1380,6 +1380,33 @@ window.saveToBackend = async function saveToBackend() {
   }
 };
 
+async function savePlatformConfigToBackend() {
+  const users = Object.values(PLATFORM_CONFIG.users).map(u => ({
+    id: u.id,
+    name: u.name,
+    role: u.role,
+    feeWaiver: u.feePolicy ?? "none",
+    active: u.active !== false
+  }));
+
+  const body = {
+    fees: PLATFORM_CONFIG.fees,
+    users
+  };
+
+  const res = await fetch(
+    "https://loanreporting-api.jeff-263.workers.dev/platformConfig",
+    {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(body)
+    }
+  );
+
+  if (!res.ok) {
+    throw new Error(`Platform config save failed: ${res.status}`);
+  }
+}
 
 
   /* Buttons */
@@ -1391,12 +1418,23 @@ window.saveToBackend = async function saveToBackend() {
 
 
   document.getElementById("save-btn").onclick = async () => {
-  status.textContent = "Saving…";
-  await savePlatformConfig();   // in-memory
-  await saveToBackend();        // loans
-  clearDirty();
-  status.textContent = "Saved ✔";
+  try {
+    status.textContent = "Saving…";
+
+    // 1. Save loans (existing behavior)
+    await saveToBackend();
+
+    // 2. Save users + fees (NEW – real persistence)
+    await savePlatformConfigToBackend();
+
+    clearDirty();
+    status.textContent = "Saved ✔";
+  } catch (e) {
+    console.error("[ADMIN] Save failed", e);
+    status.textContent = "Save failed";
+  }
 };
+
 
 
 
