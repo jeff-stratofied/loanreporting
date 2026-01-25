@@ -21,10 +21,21 @@ export async function loadPlatformConfig(url) {
 
   const cfg = await res.json();
 
-  // Merge (do not replace object reference)
-  PLATFORM_CONFIG.fees = cfg.fees || PLATFORM_CONFIG.fees;
-  PLATFORM_CONFIG.users = cfg.users || {};
+  PLATFORM_CONFIG.fees = cfg.fees ?? PLATFORM_CONFIG.fees;
+
+  // Normalize users into an object keyed by id
+  PLATFORM_CONFIG.users = {};
+  (cfg.users || []).forEach(u => {
+    PLATFORM_CONFIG.users[u.id] = {
+      id: u.id,
+      name: u.name,
+      role: u.role,
+      feePolicy: u.feeWaiver ?? "none",
+      active: u.active !== false
+    };
+  });
 }
+
 
 // ----------------------------------
 // Save platform config back to GitHub
@@ -33,24 +44,9 @@ export async function loadPlatformConfig(url) {
 // ----------------------------------
 // Save platform config (ADMIN ONLY)
 // ----------------------------------
-export async function savePlatformConfig() {
-  if (!PLATFORM_CONFIG._saveEndpoint) {
-    console.warn("Platform config is read-only on this page");
-    return;
-  }
-
-  const res = await fetch(PLATFORM_CONFIG._saveEndpoint, {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({
-      path: PLATFORM_CONFIG._path,
-      content: JSON.stringify(PLATFORM_CONFIG, null, 2),
-      message: "Update platform config"
-    })
-  });
-
-  if (!res.ok) {
-    throw new Error(`Failed to save platform config: ${res.status}`);
-  }
+export function savePlatformConfig() {
+  // Same behavior as loans: commit in-memory state only
+  console.log("Platform config saved (in-memory)");
 }
+
 
