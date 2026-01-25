@@ -21,20 +21,38 @@ export async function loadPlatformConfig(url) {
 
   const cfg = await res.json();
 
+  // Fees
   PLATFORM_CONFIG.fees = cfg.fees ?? PLATFORM_CONFIG.fees;
 
-  // Normalize users into an object keyed by id
+  // Users (support object OR array)
   PLATFORM_CONFIG.users = {};
-  (cfg.users || []).forEach(u => {
-    PLATFORM_CONFIG.users[u.id] = {
-      id: u.id,
-      name: u.name,
-      role: u.role,
-      feePolicy: u.feeWaiver ?? "none",
-      active: u.active !== false
-    };
-  });
+
+  if (Array.isArray(cfg.users)) {
+    // legacy / older format
+    cfg.users.forEach(u => {
+      PLATFORM_CONFIG.users[u.id] = {
+        id: u.id,
+        name: u.name,
+        role: u.role,
+        feePolicy: u.feePolicy ?? u.feeWaiver ?? "none",
+        active: u.active !== false
+      };
+    });
+  } else if (cfg.users && typeof cfg.users === "object") {
+    Object.entries(cfg.users).forEach(([id, u]) => {
+      PLATFORM_CONFIG.users[id] = {
+        id,
+        name: u.name,
+        role: u.role,
+        feePolicy: u.feePolicy ?? "none",
+        active: u.active !== false
+      };
+    });
+  }
+
+  return PLATFORM_CONFIG;
 }
+
 
 
 // ----------------------------------
