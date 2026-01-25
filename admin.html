@@ -1156,6 +1156,7 @@ PLATFORM_CONFIG._path = "data/platformConfig.json";
   
 renderPlatformConfig();
 
+  
 function renderPlatformConfig() {
   // =============================
   // Platform Fees
@@ -1215,34 +1216,32 @@ function renderPlatformConfig() {
 
       <!-- Fee policy -->
       <div style="display:flex;gap:6px;flex-wrap:wrap">
-        ${[
-          ["none", "No fees"],
-          ["setup-only", "Setup"],
-          ["grace-only", "Setup+grace"],
-          ["all", "All"]
-        ].map(([val,label]) => `
-          <label style="
-            border:1px solid var(--border);
-            border-radius:6px;
-            padding:3px 8px;
-            font-size:0.7rem;
-            cursor:pointer;
-            white-space:nowrap;
-            background:${u.feePolicy === val ? "var(--green)" : "transparent"};
-            color:${u.feePolicy === val ? "#fff" : "var(--text)"};
-          ">
-            <input
-              type="radio"
-              name="fee-${id}"
-              value="${val}"
-              data-user-fee="${id}"
-              ${u.feePolicy === val ? "checked" : ""}
-              style="display:none"
-            >
-            ${label}
-          </label>
-        `).join("")}
-      </div>
+${[
+  ["none", "No fees"],
+  ["setup-only", "Setup"],
+  ["grace-only", "Setup+grace"],
+  ["all", "All"]
+].map(([val,label]) => `
+  <div
+    data-fee-btn="${id}"
+    data-fee-val="${val}"
+    style="
+      border:1px solid var(--border);
+      border-radius:6px;
+      padding:3px 8px;
+      font-size:0.7rem;
+      cursor:pointer;
+      user-select:none;
+      background:${u.feePolicy === val ? "var(--green)" : "transparent"};
+      color:${u.feePolicy === val ? "#fff" : "var(--text)"};
+      white-space:nowrap;
+    "
+  >
+    ${label}
+  </div>
+`).join("")}
+</div>
+
 
       <!-- Remove -->
       <button
@@ -1263,6 +1262,18 @@ function renderPlatformConfig() {
     list.appendChild(row);
   });
 }
+
+  document.addEventListener("click", e => {
+  const btn = e.target.closest("[data-fee-btn]");
+  if (!btn) return;
+
+  const userId = btn.dataset.feeBtn;
+  const val = btn.dataset.feeVal;
+
+  PLATFORM_CONFIG.users[userId].feePolicy = val;
+  markDirty();            // if you have this
+  renderPlatformConfig(); // re-render pills
+});
 
 
   document.getElementById("cfg-setup-fee").onchange = e => {
