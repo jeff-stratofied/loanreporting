@@ -39,7 +39,7 @@ async function handleFetch(request) {
     // =====================================================
     // PLATFORM CONFIG API (GitHub-backed, like loans)
     // =====================================================
-    if (url.pathname === "/config") {
+    if (url.pathname === "/platformConfig") {
 
       // GET platform config
       if (request.method === "GET") {
