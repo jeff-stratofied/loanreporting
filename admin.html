@@ -1140,125 +1140,114 @@ PLATFORM_CONFIG._path = "data/platformConfig.json";
   
 renderPlatformConfig();
 
-  function renderPlatformConfig() {
-  // Fees
+function renderPlatformConfig() {
+  // =============================
+  // Platform Fees
+  // =============================
   document.getElementById("cfg-setup-fee").value =
     PLATFORM_CONFIG.fees.setupFee;
 
   document.getElementById("cfg-monthly-bps").value =
     PLATFORM_CONFIG.fees.monthlyServicingBps;
 
-    
-  // Users
-Object.values(PLATFORM_CONFIG.users).forEach(u => {
-  if (!u.feePolicy) u.feePolicy = "none";
-});
+  // =============================
+  // Normalize user fee policies
+  // =============================
+  Object.values(PLATFORM_CONFIG.users).forEach(u => {
+    if (!u.feePolicy) u.feePolicy = "none";
+  });
 
-    
+  // =============================
+  // Render users
+  // =============================
   const list = document.getElementById("user-list");
   list.innerHTML = "";
 
   Object.entries(PLATFORM_CONFIG.users).forEach(([id, u]) => {
     const row = document.createElement("div");
     row.style.cssText = `
-  padding:10px 12px;
-  border:1px solid var(--border);
-  border-radius:12px;
-  margin-bottom:12px;
-  background:var(--card);
-`;
+      display:grid;
+      grid-template-columns: 220px 120px 1fr auto;
+      align-items:center;
+      gap:10px;
+      padding:6px 8px;
+      border-bottom:1px solid var(--border);
+    `;
 
+    row.innerHTML = `
+      <!-- User -->
+      <div style="font-weight:500">
+        ${u.name}
+        <span style="color:var(--muted);font-weight:400">
+          (${id})
+        </span>
+      </div>
 
-row.innerHTML = `
-<div style="
-  display:flex;
-  justify-content:space-between;
-  align-items:center;
-  margin-bottom:8px;
-">
-  <div style="font-weight:600">
-    ${u.name}
-    <span style="color:var(--muted);font-weight:400">
-      (${id})
-    </span>
-  </div>
-
-  <select
-    data-user-role="${id}"
-    style="max-width:140px"
-  >
-    ${["customer","lender","investor","admin"].map(r =>
-      `<option ${u.role===r?"selected":""}>${r}</option>`
-    ).join("")}
-  </select>
-</div>
-
-<div style="
-  font-size:0.75rem;
-  color:var(--muted);
-  margin-bottom:4px;
-">
-  Fee policy for all loans owned by this user
-</div>
-
-  
-  <div style="
-  display:grid;
-  grid-template-columns:repeat(4,auto);
-justify-content:start;
-
-  gap:6px;
-  margin-top:8px;
-">
-  ${[
-    ["none", "No fees waived"],
-    ["setup-only", "Setup only"],
-    ["grace-only", "Setup + grace"],
-    ["all", "All fees"]
-  ].map(([val,label]) => `
-    <label style="
-      border:1px solid var(--border);
-      border-radius:8px;
-      padding:5px 10px;
-      font-size:0.7rem;
-      text-align:center;
-      cursor:pointer;
-      background:${u.feePolicy === val ? "var(--green)" : "transparent"};
-      color:${u.feePolicy === val ? "#fff" : "var(--text)"};
-    ">
-      <input
-        type="radio"
-        name="fee-${id}"
-        value="${val}"
-        data-user-fee="${id}"
-        ${u.feePolicy === val ? "checked" : ""}
-        style="display:none"
+      <!-- Role -->
+      <select
+        data-user-role="${id}"
+        style="
+          max-width:120px;
+          font-size:0.75rem;
+          padding:2px 6px;
+        "
       >
-      ${label}
-    </label>
-  `).join("")}
-</div>
+        ${["customer","lender","investor","admin"].map(r =>
+          `<option ${u.role === r ? "selected" : ""}>${r}</option>`
+        ).join("")}
+      </select>
 
-<div style="text-align:right;margin-top:6px">
-  <button
-    data-del="${id}"
-    style="
-      background:transparent;
-      border:none;
-      color:#ef4444;
-      font-size:0.7rem;
-      cursor:pointer;
-    "
-  >
-    Remove user
-  </button>
-</div>
+      <!-- Fee policy -->
+      <div style="display:flex;gap:6px;flex-wrap:wrap">
+        ${[
+          ["none", "No fees"],
+          ["setup-only", "Setup"],
+          ["grace-only", "Setup+grace"],
+          ["all", "All"]
+        ].map(([val,label]) => `
+          <label style="
+            border:1px solid var(--border);
+            border-radius:6px;
+            padding:3px 8px;
+            font-size:0.7rem;
+            cursor:pointer;
+            white-space:nowrap;
+            background:${u.feePolicy === val ? "var(--green)" : "transparent"};
+            color:${u.feePolicy === val ? "#fff" : "var(--text)"};
+          ">
+            <input
+              type="radio"
+              name="fee-${id}"
+              value="${val}"
+              data-user-fee="${id}"
+              ${u.feePolicy === val ? "checked" : ""}
+              style="display:none"
+            >
+            ${label}
+          </label>
+        `).join("")}
+      </div>
 
-`;
-    
+      <!-- Remove -->
+      <button
+        data-del="${id}"
+        style="
+          background:none;
+          border:none;
+          color:#ef4444;
+          font-size:0.65rem;
+          cursor:pointer;
+          padding:0;
+        "
+      >
+        Remove
+      </button>
+    `;
+
     list.appendChild(row);
   });
 }
+
 
   document.getElementById("cfg-setup-fee").onchange = e => {
   PLATFORM_CONFIG.fees.setupFee = Number(e.target.value);
