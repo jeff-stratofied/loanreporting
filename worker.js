@@ -32,41 +32,51 @@ async function loadLoans() {
 /**
  * Main fetch handler
  */
-async function handleFetch(request, env) {
+async function handleFetch(request) {
   try {
     const url = new URL(request.url);
 
     // =====================================================
-    // PLATFORM CONFIG API
+    // PLATFORM CONFIG API (GitHub-backed, like loans)
     // =====================================================
     if (url.pathname === "/config") {
-      // GET config
+
+      // GET platform config
       if (request.method === "GET") {
-        const data = await env.CONFIG_KV.get("platformConfig");
-        return new Response(data || "{}", {
+        const res = await fetch(
+          "https://raw.githubusercontent.com/jeff-stratofied/loanreporting/main/data/platformConfig.json",
+          { cache: "no-store" }
+        );
+
+        if (!res.ok) {
+          return new Response(
+            "Failed to load platform config",
+            { status: 500 }
+          );
+        }
+
+        return new Response(await res.text(), {
           headers: { "Content-Type": "application/json" }
         });
       }
 
-      // POST config
+      // POST platform config (ADMIN SAVE)
       if (request.method === "POST") {
         const body = await request.json();
-        await env.CONFIG_KV.put(
-          "platformConfig",
-          JSON.stringify(body)
-        );
 
-        return new Response(
-          JSON.stringify({ ok: true }),
-          { headers: { "Content-Type": "application/json" } }
-        );
+        // Reuse the SAME GitHub commit helper as loans
+        return await saveJsonToGitHub({
+          path: "data/platformConfig.json",
+          content: JSON.stringify(body, null, 2),
+          message: "Update platform config"
+        });
       }
 
       return new Response("Method not allowed", { status: 405 });
     }
 
     // =====================================================
-    // DEFAULT: LOANS API
+    // DEFAULT: LOANS API (unchanged)
     // =====================================================
     const loans = await loadLoans();
     return Response.json(loans);
@@ -78,5 +88,6 @@ async function handleFetch(request, env) {
     );
   }
 }
+
 
 export default { fetch: handleFetch };
