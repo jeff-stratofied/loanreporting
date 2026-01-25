@@ -1,39 +1,81 @@
-const workerRequest = (...args) => globalThis["fetch"](...args);
+const workerRequest = (...args) => globalThis.fetch(...args);
 
-async function loadLoans(request, init) {
-  return workerRequest(request, init);
+/**
+ * Load loans from GitHub
+ */
+async function loadLoans() {
+  const url =
+    "https://raw.githubusercontent.com/jeff-stratofied/loanreporting/main/data/loans.json";
+
+  const res = await workerRequest(url);
+  if (!res.ok) {
+    throw new Error(
+      `GitHub fetch failed: ${res.status} ${res.statusText}`
+    );
+  }
+
+  const raw = await res.json();
+
+  return (raw.loans || raw).map(l => ({
+    id: l.loanId ?? l.id,
+    name: l.loanName ?? l.name,
+    school: l.school,
+    purchaseDate: l.purchaseDate,
+    loanStartDate: l.loanStartDate,
+    purchasePrice: Number(l.principal ?? l.purchasePrice),
+    nominalRate: Number(l.rate ?? l.nominalRate),
+    termYears: Number(l.termYears),
+    graceYears: Number(l.graceYears)
+  }));
 }
 
-async function handleFetch(request) {
+/**
+ * Main fetch handler
+ */
+async function handleFetch(request, env) {
   try {
-    const url = "https://raw.githubusercontent.com/jeff-stratofied/loanreporting/main/data/loans.json";
+    const url = new URL(request.url);
 
-    const res = await loadLoans(url);
-      if (!res.ok) {
+    // =====================================================
+    // PLATFORM CONFIG API
+    // =====================================================
+    if (url.pathname === "/config") {
+      // GET config
+      if (request.method === "GET") {
+        const data = await env.CONFIG_KV.get("platformConfig");
+        return new Response(data || "{}", {
+          headers: { "Content-Type": "application/json" }
+        });
+      }
+
+      // POST config
+      if (request.method === "POST") {
+        const body = await request.json();
+        await env.CONFIG_KV.put(
+          "platformConfig",
+          JSON.stringify(body)
+        );
+
         return new Response(
-          `GitHub fetch failed: ${res.status} ${res.statusText}\nURL: ${url}`,
-          { status: 500 }
+          JSON.stringify({ ok: true }),
+          { headers: { "Content-Type": "application/json" } }
         );
       }
 
-      const raw = await res.json();
+      return new Response("Method not allowed", { status: 405 });
+    }
 
-      const parsed = (raw.loans || raw).map(l => ({
-        id: l.loanId ?? l.id,
-        name: l.loanName ?? l.name,
-        school: l.school,
-        purchaseDate: l.purchaseDate,
-        loanStartDate: l.loanStartDate,
-        purchasePrice: Number(l.principal ?? l.purchasePrice),
-        nominalRate: Number(l.rate ?? l.nominalRate),
-        termYears: Number(l.termYears),
-        graceYears: Number(l.graceYears)
-      }));
+    // =====================================================
+    // DEFAULT: LOANS API
+    // =====================================================
+    const loans = await loadLoans();
+    return Response.json(loans);
 
-    return Response.json(parsed);
-  }
-  catch (err) {
-    return new Response("Worker error: " + err.message, { status: 500 });
+  } catch (err) {
+    return new Response(
+      "Worker error: " + err.message,
+      { status: 500 }
+    );
   }
 }
 
