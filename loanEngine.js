@@ -521,7 +521,6 @@ const MONTHLY_SERVICING_RATE = getMonthlyServicingRate(feeConfig);
       const isOwned = loanDate >= purchaseMonth;
 
       // Fee calculation (no extra block)
-      const isOwned = loanDate >= purchaseMonth;
 let feeThisMonth = 0;
 if (isOwned) {
   const isFirstOwnedMonth =
@@ -537,7 +536,6 @@ if (isOwned) {
     feeThisMonth += balance * MONTHLY_SERVICING_RATE;
   }
 }
-
       schedule.push(
         normalizeDeferralFlags({
           monthIndex: schedule.length + 1,
@@ -591,13 +589,13 @@ if (isOwned) {
 
       // Fee calculation (no extra block)
       const isOwned = loanDate >= purchaseMonth;
-      let feeThisMonth = 0;
-      if (isOwned) {
-        const shouldWaiveMonthly = waiveMonthly || (waiveGraceMonthly && true); // always deferred here
-        if (!shouldWaiveMonthly) {
-          feeThisMonth += balance * MONTHLY_SERVICING_RATE;
-        }
-      }
+let feeThisMonth = 0;
+if (isOwned) {
+  const shouldWaiveMonthly = waiveMonthly || (waiveGraceMonthly && true); // always deferred here
+  if (!shouldWaiveMonthly) {
+    feeThisMonth += balance * MONTHLY_SERVICING_RATE;
+  }
+}
 
       schedule.push(
         normalizeDeferralFlags({
@@ -671,10 +669,9 @@ if (isOwned) {
 
     principalPaid += prepaymentThisMonth;
 
-{
+const isOwned = loanDate >= purchaseMonth;
 let feeThisMonth = 0;
 if (isOwned) {
-  // Setup fee (only in first owned month, lender only)
   const isFirstOwnedMonth =
     loanDate.getFullYear() === purchaseMonth.getFullYear() &&
     loanDate.getMonth() === purchaseMonth.getMonth();
@@ -682,8 +679,7 @@ if (isOwned) {
   if (isFirstOwnedMonth && ownerIsLender && !waiveSetup) {
     feeThisMonth += SETUP_FEE_AMOUNT;
   }
-
-  // Monthly servicing fee
+  // Monthly fee
   const shouldWaiveMonthly = waiveMonthly || (waiveGraceMonthly && r.isDeferred);
   if (!shouldWaiveMonthly) {
     feeThisMonth += balance * MONTHLY_SERVICING_RATE;
