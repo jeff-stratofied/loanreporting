@@ -104,7 +104,13 @@ async function handleFetch(request) {
     }
 
     const loans = await loadLoans();
-    return withCORS(Response.json(loans));
+    return withCORS(
+  Response.json({
+    loans,
+    sha: "static"
+  })
+);
+
 
   } catch (err) {
     return withCORS(
