@@ -1147,11 +1147,14 @@ html[data-theme="dark"] .close-btn {
 
   <script type="module">
     import { loadLoans } from "./loadLoans.js?v=dev";
+    
 import {
   attachSchedules,
   getCurrentScheduleIndex,
   getCurrentLoanBalance,
-  loadPlatformConfig
+  loadPlatformConfig,
+  GLOBAL_FEE_CONFIG,
+  USERS
 } from "./loanEngine.js?v=dev";
 
 
@@ -1477,6 +1480,8 @@ async function init() {
     "https://raw.githubusercontent.com/jeff-stratofied/loanreporting/main/data/platformConfig.json"
     );
   
+console.log('Loaded config:', GLOBAL_FEE_CONFIG, USERS);
+  
   /* ---------------------------------------------------------
      DATA FREEZE POINT
      After this line:
@@ -1486,6 +1491,15 @@ async function init() {
      --------------------------------------------------------- */
   await loadLoans();
 
+  const currentUser = PAGE_CONTEXT.user;  // From query param ?user=jeff
+const userRole = USERS[currentUser]?.role || 'investor';  // Default to investor
+
+// Placeholder: Filter visible loans based on role (expand as needed)
+currentLoans = currentLoans.filter(loan => {
+  if (userRole === 'admin' || userRole === 'lender') return true;  // See all
+  if (userRole === 'customer') return loan.visibleToCustomers;    // Hypothetical field—add to loans later
+  return isOwnedByUser(loan, currentUser);  // Investor default: owned loans only
+});
   
   /* =====================================================
      2) KPI COLOR MAP — MATCH ROI PAGE (SOURCE OF TRUTH)
