@@ -362,10 +362,16 @@ input:focus, select:focus {
 </div>
 
 <!-- STATUS -->
-<div style="display:flex;align-items:center;gap:10px">
-  <div id="status" class="pill">Idle</div>
+<div id="status" class="pill">Idle</div>
+
+<!-- =========================================================
+     TOP BUTTONS (ADD ROW + SAVE)
+     ========================================================= -->
+<div style="margin: 16px 0; display: flex; gap: 10px;">
+  <button id="add-row">+ Add Loan</button>
   <button id="save-btn">💾 Save Changes</button>
 </div>
+
 <div
   id="unsaved-warning"
   style="
@@ -378,71 +384,7 @@ input:focus, select:focus {
   ⚠️ You have unsaved changes — click <strong>Save Changes</strong> to apply them
 </div>
 
-<!-- =========================================================
-     PLATFORM CONFIG
-     ========================================================= -->
-<div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-bottom:18px">
-
-  <!-- FEES -->
-  <div class="card" style="background:var(--card);padding:14px;border-radius:12px;box-shadow:var(--shadow)">
-    <h3 style="margin-top:0">Platform Fees</h3>
-
-    <div style="display:grid;grid-template-columns:140px 1fr;gap:8px;align-items:center">
-  <div class="sub">Setup Fee</div>
-  <input id="cfg-setup-fee" type="number">
-
-  <div class="sub">Servicing (bps)</div>
-  <input id="cfg-monthly-bps" type="number">
-</div>
-
-
-  <!-- USERS -->
-  <div class="card" style="background:var(--card);padding:14px;border-radius:12px;box-shadow:var(--shadow)">
-    <h3 style="margin-top:0">Users & Roles</h3>
-<div style="
-  font-size:0.75rem;
-  color:var(--muted);
-  margin-bottom:8px;
-">
-  Fee policies apply to <strong>all loans owned by the user</strong>.
-  Individual loans may override these defaults.
-</div>
-<div style="
-  font-size:0.7rem;
-  color:var(--muted);
-  margin-bottom:12px;
-">
-  Setup = origination fee · Grace = servicing during grace/deferral
-</div>
-
-    <div id="user-list"></div>
-
-    <hr style="border-color:var(--border);margin:10px 0">
-
-    <input id="new-user-id" placeholder="user id (e.g. sarah)">
-    <input id="new-user-name" placeholder="Display name">
-
-    <select id="new-user-role">
-      <option value="customer">Customer</option>
-      <option value="lender">Lender</option>
-      <option value="investor">Investor</option>
-      <option value="admin">Admin</option>
-    </select>
-
-    <button id="add-user-btn" style="margin-top:8px">+ Add User</button>
-  </div>
-
-</div>
-</div>
   
-<!-- =========================================================
-     Add Loan 
-     ========================================================= -->
-
-  <div style="margin: 10px 0;">
-  <button id="add-row">+ Add Loan</button>
-</div>
-
 <!-- =========================================================
      TABLE
      ========================================================= -->
@@ -472,17 +414,6 @@ input:focus, select:focus {
 
   import { normalizeOwnership } from "/loanreporting/ownershipEngine.js?v=dev";
 
-  import {
-  loadPlatformConfig,
-  savePlatformConfig,
-  PLATFORM_CONFIG
-} from "/loanreporting/platformConfig.js?v=dev";
-
-
-const CONFIG_URL =
-  "https://raw.githubusercontent.com/jeff-stratofied/loanreporting/main/data/platformConfig.json?v=dev";
-
-
   const USER_OPTIONS = [
   { value: "jeff", label: "Jeff Customer" },
   { value: "nick", label: "Nick Lender" },
@@ -491,8 +422,6 @@ const CONFIG_URL =
 
   let currentLoans = [];
   let currentSha = null;
-  let currentConfigSha = null;
-  
 
   // ===========================
 // UNSAVED CHANGES TRACKING
@@ -1080,374 +1009,193 @@ function collectLoans() {
   const rows = document.querySelectorAll("#loan-table-body tr");
   const list = [];
 
-  const ALLOWED_FIELDS = new Set([
-    "loanName",
-    "school",
-    "loanStartDate",
-    "principal",
-    "rate",
-    "termYears",
-    "graceYears"
-  ]);
-
   rows.forEach(row => {
     const obj = {};
     const inputs = row.querySelectorAll("[data-field]");
 
-    inputs.forEach(inp => {
-      const k = inp.dataset.field;
-      if (!ALLOWED_FIELDS.has(k)) return;
+    const ALLOWED_FIELDS = new Set([
+  "loanName",
+  "school",
+  "loanStartDate",
+  "principal",
+  "rate",
+  "termYears",
+  "graceYears"
+]);
 
-      let v;
+inputs.forEach(inp => {
+  const k = inp.dataset.field;
+  if (!ALLOWED_FIELDS.has(k)) return;
 
-      if (inp.type === "checkbox") {
-        v = inp.checked;
-      } else {
-        v = inp.value;
-      }
+  if (k === "rate") {
+  v = Number(v) / 100; // convert % back to decimal
+} else if (["principal","termYears","graceYears"].includes(k)) {
+  v = Number(v);
+}
 
-      // ----------------------------
-      // Type normalization
-      // ----------------------------
-      if (k === "rate") {
-        v = Number(v) / 100; // UI % → decimal
-      } else if (["principal", "termYears", "graceYears"].includes(k)) {
-        v = Number(v);
-      }
 
-      obj[k] = v;
-    });
+  obj[k] = v;
+});
+
 
     const loanId = row.dataset.loanId;
     obj.loanId = loanId;
 
-    // ✅ PRESERVE EVENTS
-    const existing = currentLoans.find(
-      l => String(l.loanId) === String(loanId)
-    );
-    obj.events = Array.isArray(existing?.events)
-      ? structuredClone(existing.events)
-      : [];
+    // ✅ PRESERVE EVENTS FROM CURRENT STATE
+    const existing = currentLoans.find(l => String(l.loanId) === String(loanId));
+    obj.events = Array.isArray(existing?.events) ? existing.events : [];
 
-    // ✅ PRESERVE OWNERSHIP LOTS (CANONICAL)
-    obj.ownershipLots = Array.isArray(existing?.ownershipLots)
-      ? structuredClone(existing.ownershipLots)
-      : [];
+// 🔑 PRESERVE OWNERSHIP LOTS (CANONICAL)
+obj.ownershipLots = Array.isArray(existing?.ownershipLots)
+  ? structuredClone(existing.ownershipLots)
+  : [];
 
+    
     list.push(obj);
   });
 
   return list;
 }
+
+
+
   
     /* Load from Worker */
   const status = document.getElementById("status");
 
-  await loadPlatformConfig(
-  "https://raw.githubusercontent.com/jeff-stratofied/loanreporting/main/data/platformConfig.json"
-);
-
-  
-renderPlatformConfig();
-
-  
-function renderPlatformConfig() {
-  // =============================
-  // Platform Fees
-  // =============================
-  document.getElementById("cfg-setup-fee").value =
-    PLATFORM_CONFIG.fees.setupFee;
-
-  document.getElementById("cfg-monthly-bps").value =
-    PLATFORM_CONFIG.fees.monthlyServicingBps;
-
-  // =============================
-  // Normalize user fee policies
-  // =============================
-  Object.values(PLATFORM_CONFIG.users).forEach(u => {
-    if (!u.feePolicy) u.feePolicy = "none";
-  });
-
-  // =============================
-  // Render users
-  // =============================
-  const list = document.getElementById("user-list");
-  list.innerHTML = "";
-
-  Object.entries(PLATFORM_CONFIG.users).forEach(([id, u]) => {
-    const row = document.createElement("div");
-    row.style.cssText = `
-      display:grid;
-      grid-template-columns: 220px 120px 1fr auto;
-      align-items:center;
-      gap:10px;
-      padding:6px 8px;
-      border-bottom:1px solid var(--border);
-    `;
-
-    row.innerHTML = `
-      <!-- User -->
-      <div style="font-weight:500">
-        ${u.name}
-        <span style="color:var(--muted);font-weight:400">
-          (${id})
-        </span>
-      </div>
-
-      <!-- Role -->
-      <select
-        data-user-role="${id}"
-        style="
-          max-width:120px;
-          font-size:0.75rem;
-          padding:2px 6px;
-        "
-      >
-        ${["customer","lender","investor","admin"].map(r =>
-          `<option ${u.role === r ? "selected" : ""}>${r}</option>`
-        ).join("")}
-      </select>
-
-      <!-- Fee policy -->
-      <div style="display:flex;gap:6px;flex-wrap:wrap">
-${[
-  ["none", "No fees"],
-  ["setup-only", "Setup"],
-  ["grace-only", "Setup+grace"],
-  ["all", "All"]
-].map(([val,label]) => `
-  <div
-    data-fee-btn="${id}"
-    data-fee-val="${val}"
-    style="
-      border:1px solid var(--border);
-      border-radius:6px;
-      padding:3px 8px;
-      font-size:0.7rem;
-      cursor:pointer;
-      user-select:none;
-      background:${u.feePolicy === val ? "var(--green)" : "transparent"};
-      color:${u.feePolicy === val ? "#fff" : "var(--text)"};
-      white-space:nowrap;
-    "
-  >
-    ${label}
-  </div>
-`).join("")}
-</div>
-
-
-      <!-- Remove -->
-      <button
-        data-del="${id}"
-        style="
-          background:none;
-          border:none;
-          color:#ef4444;
-          font-size:0.65rem;
-          cursor:pointer;
-          padding:0;
-        "
-      >
-        Remove
-      </button>
-    `;
-
-    list.appendChild(row);
-  });
-}
-
-  document.addEventListener("click", e => {
-  const btn = e.target.closest("[data-fee-btn]");
-  if (!btn) return;
-
-  const userId = btn.dataset.feeBtn;
-  const val = btn.dataset.feeVal;
-
-  PLATFORM_CONFIG.users[userId].feePolicy = val;
-  markDirty();            // if you have this
-  renderPlatformConfig(); // re-render pills
-});
-
-
- document.getElementById("cfg-setup-fee").onchange = e => {
-  PLATFORM_CONFIG.fees.setupFee = Number(e.target.value);
-  markDirty();
-};
-
-document.getElementById("cfg-monthly-bps").onchange = e => {
-  PLATFORM_CONFIG.fees.monthlyServicingBps = Number(e.target.value);
-  markDirty();
-};
-
-
-document.getElementById("user-list").addEventListener("change", e => {
-  if (e.target.dataset.userRole) {
-    const id = e.target.dataset.userRole;
-    PLATFORM_CONFIG.users[id].role = e.target.value;
-    markDirty();
-  }
-});
-
-document.getElementById("user-list").addEventListener("click", e => {
-  if (!e.target.dataset.del) return;
-
-  const id = e.target.dataset.del;
-  if (!confirm(`Delete user ${id}?`)) return;
-
-  delete PLATFORM_CONFIG.users[id];
-  markDirty();
-  renderPlatformConfig();
-});
-
-
-
-  document.getElementById("add-user-btn").onclick = () => {
-  const id = document.getElementById("new-user-id").value.trim();
-  const name = document.getElementById("new-user-name").value.trim();
-  const role = document.getElementById("new-user-role").value;
-
-  if (!id || !name) return alert("Missing user id or name");
-  if (PLATFORM_CONFIG.users[id]) return alert("User already exists");
-
-  PLATFORM_CONFIG.users[id] = { name, role, feePolicy: "none" };
-markDirty();
-renderPlatformConfig();
-
-};
-
-
-window.loadFromBackend = async function loadFromBackend() {
-  status.textContent = "Loading loans & config…";
+async function loadFromBackend() {
+  status.textContent = "Loading…";
 
   try {
-    // ── Loans ───────────────────────────────────────────────
-    const loansUrl = "https://loanreporting-api.jeff-263.workers.dev/loans?t=" + Date.now();
-    const loansRes = await fetch(loansUrl, { cache: "no-store" });
-    if (!loansRes.ok) {
-      throw new Error(`Loans load failed: ${loansRes.status} ${loansRes.statusText}`);
-    }
-    const loansData = await loansRes.json();
+    const url =
+      "https://loanreporting-api.jeff-263.workers.dev/loans?t=" + Date.now();
 
-    currentLoans = loansData.loans.map(normalizeLoan);
-    currentSha = loansData.sha;
+    const res = await fetch(url, { cache: "no-store" });
 
-    // ── Platform Config ─────────────────────────────────────
-    const configUrl = "https://loanreporting-api.jeff-263.workers.dev/platformConfig?t=" + Date.now();
-    const configRes = await fetch(configUrl, { cache: "no-store" });
-    if (!configRes.ok) {
-      throw new Error(`Config load failed: ${configRes.status} ${configRes.statusText}`);
-    }
-    const configData = await configRes.json();
-
-    // Update fees (fallback to existing if missing)
-    PLATFORM_CONFIG.fees = configData.fees || PLATFORM_CONFIG.fees;
-
-    // Parse users (standardized to feePolicy; handles both feeWaiver and feePolicy names)
-    PLATFORM_CONFIG.users = {};
-    if (Array.isArray(configData.users)) {
-      configData.users.forEach(u => {
-        PLATFORM_CONFIG.users[u.id] = {
-          id: u.id,
-          name: u.name,
-          role: u.role,
-          feePolicy: u.feeWaiver ?? u.feePolicy ?? "none",
-          active: u.active !== false
-        };
-      });
-    } else if (configData.users && typeof configData.users === "object") {
-      Object.entries(configData.users).forEach(([id, u]) => {
-        PLATFORM_CONFIG.users[id] = {
-          id,
-          name: u.name,
-          role: u.role,
-          feePolicy: u.feePolicy ?? "none",
-          active: u.active !== false
-        };
-      });
+    if (!res.ok) {
+      throw new Error(`Load failed: ${res.status}`);
     }
 
-    currentConfigSha = configData.sha;  // Set the SHA for saves
+    const data = await res.json();   // ✅ THIS WAS MISSING
 
-    // ── Success path ────────────────────────────────────────
+    currentLoans = data.loans.map(normalizeLoan);
+    currentSha = data.sha;
+
     renderTable();
-    status.textContent = "Loaded ✔ (loans + config)";
-
-  } catch (err) {
-    console.error("[ADMIN] loadFromBackend failed", err);
-    status.textContent = "Load failed: " + (err.message || "Unknown error");
+    status.textContent = "Loaded ✔";
+  } catch (e) {
+    console.error("[ADMIN] loadFromBackend failed", e);
+    status.textContent = "Load failed";
   }
-};
-
+}
 
 
 /* Save to Worker */
-window.saveToBackend = async function saveToBackend() {
+async function saveToBackend() {
   status.textContent = "Saving…";
 
-  try {
-    const updated = collectLoans();
+  const updated = collectLoans();
 
-    const res = await fetch(
-      "https://loanreporting-api.jeff-263.workers.dev/loans",
-      {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json"
-        },
-        body: JSON.stringify({
-          loans: updated,
-          sha: currentSha // required for optimistic locking
-        })
-      }
-    );
+  // =====================================================
+  // VALIDATION — block saving invalid or missing values
+  // =====================================================
+  for (const loan of updated) {
 
-    if (!res.ok) {
-      throw new Error(`Save failed: ${res.status}`);
+    // ---- existing validations ----
+    if (loan.principal === "" || loan.principal === null || Number(loan.principal) <= 0) {
+      alert(`Loan "${loan.loanName}" must have an Original Loan Amount greater than 0.`);
+      status.textContent = "Save blocked";
+      return;
     }
+
+    if (!loan.loanStartDate || loan.loanStartDate === "") {
+      alert(`Loan "${loan.loanName}" is missing a Loan Start Date.`);
+      status.textContent = "Save blocked";
+      return;
+    }
+
+    // ---- DEFAULT EVENT VALIDATION ----
+    const defaults = loan.events?.filter(e => e.type === "default") || [];
+
+    if (defaults.length > 1) {
+      alert(`Loan "${loan.loanName}" has more than one Default event.`);
+      status.textContent = "Save blocked";
+      return;
+    }
+
+    if (defaults.length === 1) {
+      const d = defaults[0];
+
+      if (!d.date) {
+        alert(`Loan "${loan.loanName}" default is missing a date.`);
+        status.textContent = "Save blocked";
+        return;
+      }
+
+      if (d.recoveryAmount == null || d.recoveryAmount < 0) {
+        alert(`Loan "${loan.loanName}" default recovery amount must be $0 or more.`);
+        status.textContent = "Save blocked";
+        return;
+      }
+    }
+
+// ---- OWNERSHIP VALIDATION ----
+if (!Array.isArray(loan.ownershipLots) || loan.ownershipLots.length === 0) {
+  alert(`Loan "${loan.loanName}" has no ownership lots.`);
+  status.textContent = "Save blocked";
+  return;
+}
+
+const sum = loan.ownershipLots.reduce((s, l) => s + (Number(l.pct) || 0), 0);
+if (Math.abs(sum - 1) > 0.0001) {
+  alert(`Loan "${loan.loanName}" ownership must total 100%.`);
+  status.textContent = "Save blocked";
+  return;
+}
+
+for (const lot of loan.ownershipLots) {
+  if (!lot.user || !lot.purchaseDate || lot.pct <= 0) {
+    alert(`Loan "${loan.loanName}" has an invalid ownership lot.`);
+    status.textContent = "Save blocked";
+    return;
+  }
+}
+    
+  }
+
+updated.forEach(loan => {
+  delete loan.user;
+  delete loan.purchaseDate;
+  delete loan.purchasePrice;
+});
+
+
+
+  
+  // =====================================================
+  // SAVE (only runs if validation passed)
+  // =====================================================
+  try {
+    const res = await fetch("https://loanreporting-api.jeff-263.workers.dev/loans", {
+      method: "POST",
+      headers: {"Content-Type": "application/json"},
+      body: JSON.stringify({
+        loans: updated,
+        sha: currentSha
+      })
+    });
 
     const data = await res.json();
+    if (!res.ok) throw data;
 
-    // Update local SHA so next save works
-    currentSha = data.sha;
-
+    currentSha = data.content.sha;
     status.textContent = "Saved ✔";
-  } catch (e) {
-    console.error("[ADMIN] saveToBackend failed", e);
+    clearDirty();
+
+  } catch (err) {
+    console.error(err);
     status.textContent = "Save failed";
   }
-};
-
-async function savePlatformConfigToBackend() {
-  const users = Object.values(PLATFORM_CONFIG.users).map(u => ({
-    id: u.id,
-    name: u.name,
-    role: u.role,
-    feeWaiver: u.feePolicy ?? "none",  // Consistent naming for backend
-    active: u.active !== false
-  }));
-
-  const body = {
-    fees: PLATFORM_CONFIG.fees,
-    users,
-    sha: currentConfigSha  // Now safe because we declare & set it on load
-  };
-
-  const res = await fetch(
-    "https://loanreporting-api.jeff-263.workers.dev/platformConfig",
-    {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(body)
-    }
-  );
-
-  if (!res.ok) {
-    throw new Error(`Platform config save failed: ${res.status}`);
-  }
-
-  const savedData = await res.json();
-  currentConfigSha = savedData.sha; // Update local SHA after successful save
 }
 
 
@@ -1459,26 +1207,7 @@ async function savePlatformConfigToBackend() {
 };
 
 
-  document.getElementById("save-btn").onclick = async () => {
-  try {
-    status.textContent = "Saving…";
-
-    // 1. Save loans (existing behavior)
-    await saveToBackend();
-
-    // 2. Save users + fees (NEW – real persistence)
-    await savePlatformConfigToBackend();
-
-    clearDirty();
-    status.textContent = "Saved ✔";
-  } catch (e) {
-    console.error("[ADMIN] Save failed", e);
-    status.textContent = "Save failed";
-  }
-};
-
-
-
+  document.getElementById("save-btn").onclick = saveToBackend;
 
   // =====================================================
 // GLOBAL DIRTY TRACKING FOR TABLE EDITS
