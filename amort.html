@@ -1163,24 +1163,6 @@ import {
   MARKET_USER
 } from "./ownershipEngine.js?v=dev";
 
-    import { loadPlatformConfig, PLATFORM_CONFIG }
-  from "./platformConfig.js?v=dev";
-
-    import { isFeeWaived } from "./feePolicy.js?v=dev";
-
-// ===================================================
-// Platform Config location
-// ===================================================
-const CONFIG_URL =
-  "https://raw.githubusercontent.com/jeff-stratofied/loanreporting/main/data/platformConfig.json";
-
-    
-await loadPlatformConfig(CONFIG_URL);
-
-// read-only
-const monthlyBps = PLATFORM_CONFIG.fees.monthlyServicingBps;
-
-
 
 /* =========================================================
    A. PAGE CONTEXT & ROUTING
@@ -1380,75 +1362,74 @@ async function loadAndNormalizeLoans() {
   // 2) { loans, sha } (admin / other pages)
   const rawLoans = Array.isArray(apiResult)
     ? apiResult
-    : apiResult.loans || [];
+    : apiResult.loans;
 
   // =========================================
   // NORMALIZE OWNERSHIP (REQUIRED)
   // =========================================
   rawLoans.forEach(l => normalizeOwnership(l));
 
-  // =========================================
-  // 🔑 AMORT CANONICAL SCHEMA NORMALIZATION
-  // -----------------------------------------
-  // Convert API fields → amort engine fields
-  // =========================================
-  rawLoans.forEach(l => {
-    // principal / rate / term
-    l.origPrincipal ??= l.principal;
-    l.apr ??= l.rate;
-    l.termMonths ??= Number.isFinite(l.termYears) ? l.termYears * 12 : undefined;
-    l.graceMonths ??= Number.isFinite(l.graceYears) ? l.graceYears * 12 : 0;
+// =========================================
+// 🔑 FILTER TO USER-OWNED LOANS ONLY
+// =========================================
+const ownedLoans = rawLoans.filter(l =>
+  isOwnedByUser(l, PAGE_CONTEXT.user)
+);
 
-    // dates
-    l.startDate ??= l.loanStartDate;
-
-    // legacy compatibility
-    l.purchaseDate ??= (() => {
-      const lots = Array.isArray(l.ownershipLots) ? l.ownershipLots : [];
+  
+// =========================================
+// 🔑 AMORT COMPATIBILITY FIX
+// -----------------------------------------
+// Amort engine still requires loan.purchaseDate.
+// For partial ownership, derive it from earliest lot.
+// =========================================
+rawLoans.forEach(l => {
+  if (!l.purchaseDate) {
+    const lots = Array.isArray(l.ownershipLots) ? l.ownershipLots : [];
+    if (lots.length) {
       const earliest = lots
         .map(x => x.purchaseDate)
         .filter(Boolean)
         .sort()[0];
-      return earliest || null;
-    })();
-  });
 
-  // =========================================
-  // 🔑 FILTER TO USER-OWNED LOANS ONLY
-  // =========================================
-  const ownedLoans = rawLoans.filter(l =>
-    isOwnedByUser(l, PAGE_CONTEXT.user)
-  );
-
-
-  // =========================================
-  // ATTACH AMORT SCHEDULES (OWNED ONLY)
-  // =========================================
-  const enrichedLoans = attachSchedules(
-    ownedLoans.map(normalizeLoan)
-  );
+      if (earliest) {
+        l.purchaseDate = earliest;
+      }
+    }
+  }
+});
 
 // --------------------------------------------------
-// DEV-ONLY SCHEMA GUARD (CANONICAL / AMORT-READY)
+// DEV-ONLY SCHEMA DRIFT GUARD (OWNERSHIP-AWARE)
 // --------------------------------------------------
 const DEV_MODE =
   location.hostname === "localhost" ||
   location.hostname.includes("github.io");
 
 if (DEV_MODE) {
-  enrichedLoans.forEach(l => {
+  rawLoans.forEach(l => {
     const problems = [];
 
-    if (!Number.isFinite(l.origPrincipal)) problems.push("origPrincipal");
-    if (!Number.isFinite(l.apr)) problems.push("apr");
-    if (!Number.isFinite(l.termMonths)) problems.push("termMonths");
-    if (!l.startDate) problems.push("startDate");
-    if (!Array.isArray(l.amort?.schedule) || !l.amort.schedule.length) {
-      problems.push("amort.schedule");
+    if (!Number.isFinite(l.principal)) problems.push("principal");
+    if (!Number.isFinite(l.termYears)) problems.push("termYears");
+    if (!l.loanStartDate) problems.push("loanStartDate");
+
+    // 🔑 Ownership invariants
+    if (!Array.isArray(l.ownershipLots) || !l.ownershipLots.length) {
+      problems.push("ownershipLots");
+    } else {
+      const sum = l.ownershipLots.reduce((s, lot) => s + (Number(lot.pct) || 0), 0);
+      if (Math.abs(sum - 1) > 0.0001) problems.push("ownershipLots ≠ 100%");
+
+      l.ownershipLots.forEach((lot, i) => {
+        if (!lot.user) problems.push(`lot[${i}].user`);
+        if (!lot.purchaseDate) problems.push(`lot[${i}].purchaseDate`);
+        if (!Number.isFinite(lot.pricePaid)) problems.push(`lot[${i}].pricePaid`);
+      });
     }
 
     if (problems.length) {
-      console.warn("⚠️ Canonical loan schema issue", {
+      console.warn("⚠️ Loan schema issue", {
         loanId: l.loanId,
         loanName: l.loanName,
         problems,
@@ -1458,48 +1439,42 @@ if (DEV_MODE) {
   });
 }
 
+const enrichedLoans = attachSchedules(
+  ownedLoans.map(normalizeLoan)
+);
+
+allLoans = enrichedLoans.map(loan => ({
+  ...loan,
+  // canonical schedules only
+  cumSchedule: loan.amort.schedule
+}));
+
+
+
+// =========================================
+// MATERIALIZE CURRENT BALANCE (FOR SORTING)
+// =========================================
+
+const today = new Date();
+
+allLoans.forEach(loan => {
+  loan.balance = getCurrentLoanBalance(loan, today);
+});
+
   
-  allLoans = enrichedLoans.map(loan => ({
-    ...loan,
-    // canonical schedules only
-    cumSchedule: loan.amort.schedule
-  }));
-
-  // =========================================
-  // MATERIALIZE CURRENT BALANCE (FOR SORTING)
-  // =========================================
-  const today = new Date();
-
-  allLoans.forEach(loan => {
-    loan.balance = getCurrentLoanBalance(loan, today);
-  });
-
-  // FINALIZE — canonical sources
-  currentLoans = [...allLoans];
+// FINALIZE — canonical sources
+currentLoans = [...allLoans];
 }
-
 
 
 async function init() {
   /* =====================================================
      1) LOAD + NORMALIZE DATA
      ===================================================== */
-
-  // 1️⃣ Load platform config FIRST
+// 1️⃣ Load platform config FIRST
   await loadPlatformConfig(
     "https://raw.githubusercontent.com/jeff-stratofied/loanreporting/main/data/platformConfig.json"
-  );
-
-  // 2️⃣ LOAD LOANS AND STORE THEM
-  const loans = await loadLoans();
-
-  window.allLoans = Array.isArray(loans) ? loans : [];
-
-  if (!window.allLoans.length) {
-    console.warn("No loans loaded — aborting init");
-    return;
-  }
-
+  
   /* ---------------------------------------------------------
      DATA FREEZE POINT
      After this line:
@@ -1507,7 +1482,6 @@ async function init() {
      - currentLoans
      MUST NOT be mutated
      --------------------------------------------------------- */
-
   await loadAndNormalizeLoans();
 
   /* =====================================================
@@ -3441,43 +3415,33 @@ function tpvSeries(loansList) {
 function tpvStackSeries(loansList) {
   const series = {}; // { "YYYY-MM": { loanId: value } }
 
-loansList.forEach(loan => {
-  const loanId = loan.loanId ?? loan.id;
+  loansList.forEach(loan => {
+    const loanId = loan.loanId ?? loan.id;
 
-  const owner =
-    PLATFORM_CONFIG.users?.[loan.ownerId] || {};
+    let cumPrincipal = 0;
+    let cumInterest  = 0;
+    let cumFees      = 0;
 
-  const waiveServicing =
-    isFeeWaived(owner, loan, "servicing");
+    (loan.amort?.schedule || []).forEach(row => {
+      if (row.isOwned === false) return;
 
-  let cumPrincipal = 0;
-  let cumInterest  = 0;
-  let cumFees      = 0;
 
-  (loan.amort?.schedule || []).forEach(row => {
-    if (row.isOwned === false) return;
+      const d = row.loanDate;
+      const key =
+        `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}`;
 
-    const d = row.loanDate;
-    const key =
-      `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}`;
+      cumPrincipal += row.principalPaid || 0;
+      cumInterest  += row.interest || 0;
+      cumFees      += Number(row.feeThisMonth || 0);
 
-    cumPrincipal += row.principalPaid || 0;
-    cumInterest  += row.interest || 0;
+      const realized   = cumPrincipal + cumInterest - cumFees;
+      const unrealized = (row.balance || 0) * 0.95;
+      const loanValue  = realized + unrealized;
 
-    // ✅ Apply fee waiver here
-    if (!waiveServicing) {
-      cumFees += Number(row.feeThisMonth || 0);
-    }
-
-    const realized   = cumPrincipal + cumInterest - cumFees;
-    const unrealized = (row.balance || 0) * 0.95;
-    const loanValue  = realized + unrealized;
-
-    series[key] ??= {};
-    series[key][loanId] = loanValue;
+      series[key] ??= {};
+      series[key][loanId] = loanValue;
+    });
   });
-});
-
 
   return series;
 }
@@ -5021,9 +4985,7 @@ if (PAGE_CONTEXT.isEmbed) {
   });
 }
 
-
-  init();
- 
+    
 </script>
 
 <script src="/loanreporting/feedback.js?v=dev"></script>
