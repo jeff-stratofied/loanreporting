@@ -1326,6 +1326,9 @@ tr.row-hover {
 
 <script type="module">
 
+  let GLOBAL_FEE_CONFIG = null;  // Initialize to null to avoid undefined errors
+let USERS = {};  // Also init users
+
 import {
   buildEarningsSchedule,
   getCanonicalCurrentEarningsRow,
