@@ -14,8 +14,8 @@
     {
       "id": "nick",
       "name": "Nick",
-      "role": "investor",
-      "feeWaiver": "none",
+      "role": "lender",
+      "feeWaiver": "all",
       "active": true
     },
     {
@@ -25,5 +25,6 @@
       "feeWaiver": "none",
       "active": true
     }
-  ]
+  ],
+  "sha": "63da3e9df94682101708f70e814143c923fc5120"
 }
