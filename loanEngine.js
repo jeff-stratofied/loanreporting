@@ -512,56 +512,51 @@ const MONTHLY_SERVICING_RATE = getMonthlyServicingRate(feeConfig);
     // ==============================
     // DEFAULT (terminal)
     // ==============================
-    if (
+       if (
       defaultMonthKey &&
       monthKeyFromDate(calendarDate) === defaultMonthKey
     ) {
       const loanDate = new Date(calendarDate);
       const applied = Math.min(balance, defaultRecovery);
+      const isOwned = loanDate >= purchaseMonth;
+
+      // Fee calculation (no extra block)
       let feeThisMonth = 0;
-if (isOwned) {
-  const isFirstOwnedMonth =
-    loanDate.getFullYear() === purchaseMonth.getFullYear() &&
-    loanDate.getMonth() === purchaseMonth.getMonth();
-  const ownerIsLender = user?.role === "lender";
-  if (isFirstOwnedMonth && ownerIsLender && !waiveSetup) {
-    feeThisMonth += SETUP_FEE_AMOUNT;
-  }
+      if (isOwned) {
+        const isFirstOwnedMonth =
+          loanDate.getFullYear() === purchaseMonth.getFullYear() &&
+          loanDate.getMonth() === purchaseMonth.getMonth();
+        const ownerIsLender = user?.role === "lender";
+        if (isFirstOwnedMonth && ownerIsLender && !waiveSetup) {
+          feeThisMonth += SETUP_FEE_AMOUNT;
+        }
+        // No monthly fee in terminal default month typically, but if policy allows charging:
+        const shouldWaiveMonthly = waiveMonthly || (waiveGraceMonthly && true); // defaulted, not deferred
+        if (!shouldWaiveMonthly) {
+          feeThisMonth += balance * MONTHLY_SERVICING_RATE;
+        }
+      }
 
-  // No monthly fee in terminal default month typically, but if policy allows charging:
-  const shouldWaiveMonthly = waiveMonthly || (waiveGraceMonthly && r.isDeferred);
-  if (!shouldWaiveMonthly) {
-    feeThisMonth += balance * MONTHLY_SERVICING_RATE;
-  }
-}
-
-  schedule.push(
-    normalizeDeferralFlags({
+      schedule.push(
+        normalizeDeferralFlags({
           monthIndex: schedule.length + 1,
           loanDate,
           displayDate: new Date(loanDate.getFullYear(), loanDate.getMonth(), 1),
-
           payment: +applied.toFixed(2),
           principalPaid: +applied.toFixed(2),
           interest: 0,
           balance: +(balance - applied).toFixed(2),
-
           prepayment: 0,
           accruedInterest: 0,
-
           feeThisMonth: +feeThisMonth.toFixed(2),
-
           isOwned,
           ownershipDate: isOwned ? loanDate : null,
-
           defaulted: true,
           isTerminal: true,
           recovery: +applied.toFixed(2),
           contractualMonth: i + 1
-      })
-  );
-}
-
+        })
+      );
       break;
     }
 
@@ -579,14 +574,11 @@ if (isOwned) {
     // ==============================
     if (deferralRemaining > 0) {
       const loanDate = new Date(calendarDate);
-
       const accruedInterest = balance * monthlyRate;
       balance += accruedInterest;
-
       const key = monthKeyFromDate(loanDate);
       const monthEvents = prepayMap[key] || [];
       let prepaymentThisMonth = 0;
-
       monthEvents.forEach(e => {
         const amt = Number(e.amount || 0);
         if (amt > 0) {
@@ -596,42 +588,36 @@ if (isOwned) {
         }
       });
 
-{
-let feeThisMonth = 0;
-if (isOwned) {
-  const shouldWaiveMonthly = waiveMonthly || (waiveGraceMonthly && row.isDeferred);
-  if (!shouldWaiveMonthly) {
-    feeThisMonth += balance * MONTHLY_SERVICING_RATE;
-  }
-}
+      // Fee calculation (no extra block)
+      const isOwned = loanDate >= purchaseMonth;
+      let feeThisMonth = 0;
+      if (isOwned) {
+        const shouldWaiveMonthly = waiveMonthly || (waiveGraceMonthly && true); // always deferred here
+        if (!shouldWaiveMonthly) {
+          feeThisMonth += balance * MONTHLY_SERVICING_RATE;
+        }
+      }
 
-  schedule.push(
-    normalizeDeferralFlags({
+      schedule.push(
+        normalizeDeferralFlags({
           monthIndex: schedule.length + 1,
           loanDate,
           displayDate: new Date(loanDate.getFullYear(), loanDate.getMonth(), 1),
-
           payment: 0,
           principalPaid: +prepaymentThisMonth.toFixed(2),
           interest: 0,
           balance: +balance.toFixed(2),
-
           prepayment: +prepaymentThisMonth.toFixed(2),
           accruedInterest: +accruedInterest.toFixed(2),
-
           feeThisMonth: +feeThisMonth.toFixed(2),
-
           isDeferred: true,
           deferralIndex: deferralTotal - deferralRemaining,
           deferralRemaining,
-
           isOwned,
           ownershipDate: isOwned ? loanDate : null,
-
           contractualMonth: i + 1
         })
-  );
-}
+      );
 
       deferralRemaining--;
       calendarDate = addMonths(calendarDate, 1);
