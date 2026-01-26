@@ -73,15 +73,18 @@ if (!Array.isArray(loan.ownershipLots)) {
 // Ownership helpers
 // -------------------------------------
 export function getUserOwnershipPct(loan, user) {
+  // Normalize input user ID
+  const normalizedUser = String(user).trim().toLowerCase();
+
   if (Array.isArray(loan.ownershipLots)) {
     return loan.ownershipLots
-      .filter(l => l.user === user)
+      .filter(l => String(l.user || '').trim().toLowerCase() === normalizedUser)
       .reduce((sum, l) => sum + (Number(l.pct) || 0), 0);
   }
 
   // fallback for legacy data only
   return (
-    loan.ownership?.allocations.find(a => a.user === user)?.percent ?? 0
+    loan.ownership?.allocations.find(a => String(a.user || '').trim().toLowerCase() === normalizedUser)?.percent ?? 0
   ) / 100;
 }
 
