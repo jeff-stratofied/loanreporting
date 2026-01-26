@@ -491,8 +491,8 @@ const CONFIG_URL =
 
   let currentLoans = [];
   let currentSha = null;
-
-  currentConfigSha = null;
+  let currentConfigSha = null;
+  
 
   // ===========================
 // UNSAVED CHANGES TRACKING
@@ -1343,7 +1343,7 @@ window.loadFromBackend = async function loadFromBackend() {
     // Update fees (fallback to existing if missing)
     PLATFORM_CONFIG.fees = configData.fees || PLATFORM_CONFIG.fees;
 
-    // Parse users (adapt to your actual parsing logic)
+    // Parse users (standardized to feePolicy; handles both feeWaiver and feePolicy names)
     PLATFORM_CONFIG.users = {};
     if (Array.isArray(configData.users)) {
       configData.users.forEach(u => {
@@ -1367,7 +1367,7 @@ window.loadFromBackend = async function loadFromBackend() {
       });
     }
 
-    currentConfigSha = configData.sha;  // Crucial for later saves
+    currentConfigSha = configData.sha;  // Set the SHA for saves
 
     // ── Success path ────────────────────────────────────────
     renderTable();
@@ -1376,7 +1376,6 @@ window.loadFromBackend = async function loadFromBackend() {
   } catch (err) {
     console.error("[ADMIN] loadFromBackend failed", err);
     status.textContent = "Load failed: " + (err.message || "Unknown error");
-    // Optional: show more detailed error in UI if you have a place for it
   }
 };
 
@@ -1424,14 +1423,14 @@ async function savePlatformConfigToBackend() {
     id: u.id,
     name: u.name,
     role: u.role,
-    feeWaiver: u.feePolicy ?? "none", // Note: feeWaiver vs feePolicy—your code mixes; standardize if needed
+    feeWaiver: u.feePolicy ?? "none",  // Consistent naming for backend
     active: u.active !== false
   }));
 
   const body = {
     fees: PLATFORM_CONFIG.fees,
     users,
-    sha: currentConfigSha // Add this
+    sha: currentConfigSha  // Now safe because we declare & set it on load
   };
 
   const res = await fetch(
@@ -1448,7 +1447,7 @@ async function savePlatformConfigToBackend() {
   }
 
   const savedData = await res.json();
-  currentConfigSha = savedData.sha; // Update local SHA
+  currentConfigSha = savedData.sha; // Update local SHA after successful save
 }
 
 
