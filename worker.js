@@ -11,6 +11,7 @@ function withCORS(res) {
   Object.entries(corsHeaders()).forEach(([k, v]) =>
     headers.set(k, v)
   );
+  headers.set("X-Debug-Worker", "platformConfig-v3");
 
   return new Response(res.body, {
     status: res.status,
@@ -18,6 +19,7 @@ function withCORS(res) {
     headers
   });
 }
+
 
 
 const workerRequest = (...args) => globalThis.fetch(...args);
