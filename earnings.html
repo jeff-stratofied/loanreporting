@@ -1352,12 +1352,7 @@ import {
 // ===================================================
 // Platform Config location
 // ===================================================
-const getGlobalConfig = () => {
-if (!window.GLOBAL_FEE_CONFIG) {
-throw new Error("GLOBAL_FEE_CONFIG not initialized");
-}
-return window.GLOBAL_FEE_CONFIG;
-};
+
   
   const CONFIG_URL =
   "https://raw.githubusercontent.com/jeff-stratofied/loanreporting/main/data/platformConfig.json";
@@ -4519,6 +4514,14 @@ function updateSortSelectFromTable(key, dir) {
 }
 
 
+  const getGlobalConfig = () => {
+if (!window.GLOBAL_FEE_CONFIG) {
+throw new Error("GLOBAL_FEE_CONFIG not initialized");
+}
+return window.GLOBAL_FEE_CONFIG;
+};
+
+  
 async function initPage() {
 
   
