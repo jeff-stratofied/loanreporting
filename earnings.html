@@ -4516,9 +4516,16 @@ async function initPage() {
 
   
   // 1️⃣ Load platform config FIRST (fees, rules, defaults)
+  try {
   await loadPlatformConfig(
-  "https://raw.githubusercontent.com/jeff-stratofied/loanreporting/main/data/platformConfig.json?t=" + Date.now()
-);
+    "https://loanreporting-api.jeff-263.workers.dev/platformConfig?t=" + Date.now()
+  );
+} catch (err) {
+  console.error("Failed to load platform config:", err);
+  // Fallback to defaults if needed
+  GLOBAL_FEE_CONFIG = { setupFee: 150, monthlyServicingBps: 25 };
+  USERS = {};
+}
 
   // Debug: confirm config loaded correctly
 console.log("Platform config loaded:", GLOBAL_FEE_CONFIG);
