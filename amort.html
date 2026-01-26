@@ -1150,7 +1150,8 @@ html[data-theme="dark"] .close-btn {
 import {
   attachSchedules,
   getCurrentScheduleIndex,
-  getCurrentLoanBalance
+  getCurrentLoanBalance,
+  loadPlatformConfig
 } from "./loanEngine.js?v=dev";
 
 
@@ -1483,7 +1484,7 @@ async function init() {
      - currentLoans
      MUST NOT be mutated
      --------------------------------------------------------- */
-  await loadAndNormalizeLoans();
+  await loadLoans();
 
   /* =====================================================
      2) KPI COLOR MAP — MATCH ROI PAGE (SOURCE OF TRUTH)
