@@ -492,6 +492,8 @@ const CONFIG_URL =
   let currentLoans = [];
   let currentSha = null;
 
+  currentConfigSha = null;
+
   // ===========================
 // UNSAVED CHANGES TRACKING
 // ===========================
@@ -1316,28 +1318,65 @@ renderPlatformConfig();
 
 
 window.loadFromBackend = async function loadFromBackend() {
-  status.textContent = "Loading…";
+  status.textContent = "Loading loans & config…";
 
   try {
-    const url =
-      "https://loanreporting-api.jeff-263.workers.dev/loans?t=" + Date.now();
+    // ── Loans ───────────────────────────────────────────────
+    const loansUrl = "https://loanreporting-api.jeff-263.workers.dev/loans?t=" + Date.now();
+    const loansRes = await fetch(loansUrl, { cache: "no-store" });
+    if (!loansRes.ok) {
+      throw new Error(`Loans load failed: ${loansRes.status} ${loansRes.statusText}`);
+    }
+    const loansData = await loansRes.json();
 
-    const res = await fetch(url, { cache: "no-store" });
+    currentLoans = loansData.loans.map(normalizeLoan);
+    currentSha = loansData.sha;
 
-    if (!res.ok) {
-      throw new Error(`Load failed: ${res.status}`);
+    // ── Platform Config ─────────────────────────────────────
+    const configUrl = "https://loanreporting-api.jeff-263.workers.dev/platformConfig?t=" + Date.now();
+    const configRes = await fetch(configUrl, { cache: "no-store" });
+    if (!configRes.ok) {
+      throw new Error(`Config load failed: ${configRes.status} ${configRes.statusText}`);
+    }
+    const configData = await configRes.json();
+
+    // Update fees (fallback to existing if missing)
+    PLATFORM_CONFIG.fees = configData.fees || PLATFORM_CONFIG.fees;
+
+    // Parse users (adapt to your actual parsing logic)
+    PLATFORM_CONFIG.users = {};
+    if (Array.isArray(configData.users)) {
+      configData.users.forEach(u => {
+        PLATFORM_CONFIG.users[u.id] = {
+          id: u.id,
+          name: u.name,
+          role: u.role,
+          feePolicy: u.feeWaiver ?? u.feePolicy ?? "none",
+          active: u.active !== false
+        };
+      });
+    } else if (configData.users && typeof configData.users === "object") {
+      Object.entries(configData.users).forEach(([id, u]) => {
+        PLATFORM_CONFIG.users[id] = {
+          id,
+          name: u.name,
+          role: u.role,
+          feePolicy: u.feePolicy ?? "none",
+          active: u.active !== false
+        };
+      });
     }
 
-    const data = await res.json();
+    currentConfigSha = configData.sha;  // Crucial for later saves
 
-    currentLoans = data.loans.map(normalizeLoan);
-    currentSha = data.sha;
-
+    // ── Success path ────────────────────────────────────────
     renderTable();
-    status.textContent = "Loaded ✔";
-  } catch (e) {
-    console.error("[ADMIN] loadFromBackend failed", e);
-    status.textContent = "Load failed";
+    status.textContent = "Loaded ✔ (loans + config)";
+
+  } catch (err) {
+    console.error("[ADMIN] loadFromBackend failed", err);
+    status.textContent = "Load failed: " + (err.message || "Unknown error");
+    // Optional: show more detailed error in UI if you have a place for it
   }
 };
 
@@ -1385,13 +1424,14 @@ async function savePlatformConfigToBackend() {
     id: u.id,
     name: u.name,
     role: u.role,
-    feeWaiver: u.feePolicy ?? "none",
+    feeWaiver: u.feePolicy ?? "none", // Note: feeWaiver vs feePolicy—your code mixes; standardize if needed
     active: u.active !== false
   }));
 
   const body = {
     fees: PLATFORM_CONFIG.fees,
-    users
+    users,
+    sha: currentConfigSha // Add this
   };
 
   const res = await fetch(
@@ -1406,6 +1446,9 @@ async function savePlatformConfigToBackend() {
   if (!res.ok) {
     throw new Error(`Platform config save failed: ${res.status}`);
   }
+
+  const savedData = await res.json();
+  currentConfigSha = savedData.sha; // Update local SHA
 }
 
 
