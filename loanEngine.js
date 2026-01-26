@@ -31,7 +31,7 @@ function resolveUserForLoan(loan) {
 // ------------------------------------
 // Canonical user registry (engine-owned)
 // ------------------------------------
-let USERS = {
+export let USERS = {
   jeff: {
     id: "jeff",
     role: "lender",        // or "investor"
@@ -59,8 +59,7 @@ let USERS = {
 // ===============================
 // Platform Configuration (GLOBAL)
 // ===============================
-let GLOBAL_FEE_CONFIG = null;
-
+export let GLOBAL_FEE_CONFIG = null;
 
 
 function getMonthlyServicingRate(feeConfig) {
