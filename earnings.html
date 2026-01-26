@@ -4513,44 +4513,47 @@ function updateSortSelectFromTable(key, dir) {
   sortEl.value = `${base}_${dir === -1 ? "desc" : "asc"}`;
 }
 
-
-  const getGlobalConfig = () => {
+const getGlobalConfig = () => {
 if (!window.GLOBAL_FEE_CONFIG) {
 throw new Error("GLOBAL_FEE_CONFIG not initialized");
 }
 return window.GLOBAL_FEE_CONFIG;
 };
 
-  
+
 async function initPage() {
+let fees;
 
-  
-  // 1️⃣ Load platform config FIRST (fees, rules, defaults)
-  // Try Worker first (preferred, has SHA + CORS)
+
 try {
-  await loadPlatformConfig(
-    "https://loanreporting-api.jeff-263.workers.dev/platformConfig?t=" + Date.now()
-  );
-  console.log("Platform config loaded successfully from Worker");
+await loadPlatformConfig(
+"https://loanreporting-api.jeff-263.workers.dev/platformConfig?t=" + Date.now()
+);
+console.log("Platform config loaded successfully from Worker");
 } catch (err) {
-  console.error("Failed to load platform config from Worker:", err);
+console.error("Failed to load platform config from Worker:", err);
 
-  // Fallback to raw GitHub (with cache-bust)
-  try {
-    await loadPlatformConfig(
-      "https://raw.githubusercontent.com/jeff-stratofied/loanreporting/main/data/platformConfig.json?t=" + Date.now()
-    );
-    console.log("Platform config loaded from raw GitHub fallback");
-  } catch (fallbackErr) {
-    console.error("Fallback to raw GitHub also failed:", fallbackErr);
 
-    // Ultimate hard fallback to safe defaults
-    GLOBAL_FEE_CONFIG = { setupFee: 150, monthlyServicingBps: 25 };
-    USERS = {};
-    console.warn("Using hard-coded default config (no user-specific waivers)");
-  }
+try {
+await loadPlatformConfig(
+"https://raw.githubusercontent.com/jeff-stratofied/loanreporting/main/data/platformConfig.json?t=" + Date.now()
+);
+console.log("Platform config loaded from raw GitHub fallback");
+} catch (fallbackErr) {
+console.error("Fallback to raw GitHub also failed:", fallbackErr);
+
+
+// ✅ module-safe hard fallback
+window.GLOBAL_FEE_CONFIG = { setupFee: 150, monthlyServicingBps: 25 };
+window.USERS = {};
+console.warn("Using hard-coded default config (no user-specific waivers)");
 }
-const fees = getGlobalConfig();
+}
+
+// 🔑 MUST be inside initPage
+fees = getGlobalConfig();
+
+console.log("Final fees in use:", fees);
   
 // Debug: Always log current state after all attempts
 console.log("Platform config loaded:", GLOBAL_FEE_CONFIG);
