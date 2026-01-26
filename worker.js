@@ -1,3 +1,25 @@
+function corsHeaders() {
+  return {
+    "Access-Control-Allow-Origin": "https://jeff-stratofied.github.io",
+    "Access-Control-Allow-Methods": "GET, POST, OPTIONS",
+    "Access-Control-Allow-Headers": "Content-Type"
+  };
+}
+
+function withCORS(res) {
+  const headers = new Headers(res.headers);
+  Object.entries(corsHeaders()).forEach(([k, v]) =>
+    headers.set(k, v)
+  );
+
+  return new Response(res.body, {
+    status: res.status,
+    statusText: res.statusText,
+    headers
+  });
+}
+
+
 const workerRequest = (...args) => globalThis.fetch(...args);
 
 /**
