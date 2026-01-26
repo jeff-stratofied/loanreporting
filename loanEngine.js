@@ -7,6 +7,7 @@
 // -------------------------------
 
 import { loadLoans as fetchLoans } from "./loadLoans.js";
+import { isOwnedByUser } from "./ownershipEngine.js"; 
 
 
 // ------------------------------------
