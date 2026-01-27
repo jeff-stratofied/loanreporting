@@ -704,6 +704,12 @@ const isFirstOwnedMonth =
   const { waiveSetup, waiveMonthly } =
     resolveFeeWaiverFlags(user, loan);
 
+  console.log('DEBUG: resolveFeeWaiverFlags result for loan', loan.loanName || loan.id, ':', {
+  waiveSetup,
+  waiveMonthly,
+  effectiveWaiver: (loan?.feeWaiver || user?.feeWaiver || 'none')
+});
+
   let feeThisMonth = 0;
 
   if (isFirstOwnedMonth && ownerIsLender && !waiveSetup) {
