@@ -434,7 +434,7 @@ const loanName = loan.loanName || loan.id || "unknown";
 const testKey = `waiver-test-${loanName.replace(/\s+/g, '-')}`;
 if (!window[testKey]) {
   if (
-  loan.principal === 3500 &&                // or whatever the orig amt is
+  loan.principal === 3750 &&                // or whatever the orig amt is
   loan.nominalRate === 8.00 &&
   loan.school?.toLowerCase().includes("ohio") || loan.school?.includes("OSU")
 ) {
