@@ -1175,13 +1175,6 @@ import { buildPortfolioViews } from './loanEngine.js?v=dev';
    ========================================================= */
 // Load platform config (stable fallback)
 await loadPlatformConfig('/loanreporting/platformConfig.json');  // Adjust path if needed
-const PLATFORM_CONFIG_FALLBACK = {
-  fees: { setupFee: 150, monthlyServicingBps: 25 },
-  users: {}
-};
-const PLATFORM_CONFIG = PLATFORM_CONFIG || PLATFORM_CONFIG_FALLBACK;
-
-
     
 const PAGE_CONTEXT = (() => {
   const params = new URLSearchParams(window.location.search);
@@ -1489,10 +1482,8 @@ async function init() {
     } catch (configErr) {
       console.warn("Platform config load failed, using defaults:", configErr);
       // Fallback defaults (matches your current behavior)
-      window.PLATFORM_CONFIG = {
-        fees: { setupFee: 150, monthlyServicingBps: 25 },
-        users: {}
-      };
+      PLATFORM_CONFIG.fees = { setupFee: 150, monthlyServicingBps: 25 };
+      PLATFORM_CONFIG.users = {};
     }
 
     /* =====================================================
