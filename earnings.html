@@ -1714,60 +1714,52 @@ function buildOwnershipPie(loan) {
   `;
 }
   
-  // =====================================================
-// EVENT BADGE TOOLTIP TEXT — MATCH ROI EXACTLY
 // =====================================================
-function buildEventBadgeTooltip(loan) {
-  const events = loan?.events || [];
+// EVENT BADGE TOOLTIP TEXT — MATCH AMORT EXACTLY
+// =====================================================
+function getEventBadgeTooltip(event) {
+  if (!event || !event.type) return "";
 
-  // DEFAULT
-  if (loan.eventType === "default") {
-    const evt = events.find(e => e.type === "default");
-    const month = evt?.date
-      ? formatMonthYear(new Date(evt.date))
-      : "Unknown";
+  switch (event.type.toLowerCase()) {
+    case "default": {
+      const month = event.date
+        ? formatMonthYear(new Date(event.date))
+        : "Unknown";
+      const recovered = Number(event.recoveredAmount ?? 0);
+      return `
+        <strong>Default</strong><br>
+        ${month} • Recovered ${formatCurrency(recovered)}
+      `;
+    }
 
-    const recovered = Number(evt?.recoveredAmount ?? 0);
+    case "deferral": {
+      const start = event.startDate || event.from
+        ? formatMonthYear(new Date(event.startDate || event.from))
+        : "Unknown";
+      const months = Number(event.months ?? event.duration ?? 0);
+      return `
+        <strong>Deferral</strong><br>
+        ${start} • ${months} months
+      `;
+    }
 
-    return `
-      <strong>Default</strong><br>
-      ${month} • Recovered ${formatCurrency(recovered)}
-    `;
+    case "prepayment": {
+      const date = event.date
+        ? formatMonthYear(new Date(event.date))
+        : "Unknown";
+      const amount = Number(event.amount ?? event.principal ?? 0);
+      return `
+        <strong>Prepayment</strong><br>
+        ${formatCurrency(amount)} • ${date}
+      `;
+    }
+
+    default:
+      return `
+        <strong>${event.type.charAt(0).toUpperCase() + event.type.slice(1)}</strong><br>
+        ${event.date ? formatMonthYear(new Date(event.date)) : "Details"}
+      `;
   }
-
-  // DEFERRAL
-  if (loan.eventType === "deferral") {
-    const evt = events.find(e => e.type === "deferral");
-
-    const start = evt?.startDate
-      ? formatMonthYear(new Date(evt.startDate))
-      : "Unknown";
-
-    const months = Number(evt?.months ?? evt?.duration ?? 0);
-
-    return `
-      <strong>Deferral</strong><br>
-      ${start} • ${months} months
-    `;
-  }
-
-  // PREPAYMENT
-  if (loan.eventType === "prepayment") {
-    const evt = events.find(e => e.type === "prepayment");
-
-    const date = evt?.date
-      ? formatMonthYear(new Date(evt.date))
-      : "Unknown";
-
-    const amount = Number(evt?.amount ?? evt?.principal ?? 0);
-
-    return `
-      <strong>Prepayment</strong><br>
-      ${formatCurrency(amount)} • ${date}
-    `;
-  }
-
-  return "";
 }
 
   
@@ -4414,6 +4406,18 @@ function getCurrentNetEarnings(loan, today = new Date()) {
 /* =========================
    TABLE RENDER (EARNINGS)
    ========================= */
+
+function getEventTooltipText(event) {
+  if (event.type === 'deferral') {
+    return `Deferral: ${event.from} to ${event.to}`;
+  } else if (event.type === 'default') {
+    return `Default: ${event.date}`;
+  } else {
+    return `${event.type.charAt(0).toUpperCase() + event.type.slice(1)}: ${event.date || 'Details'}`;
+  }
+}
+
+  
 function renderLoanTable(loans) {
   const table = document.getElementById("loanTable");
   const tbody = table?.querySelector("tbody");
@@ -4423,24 +4427,44 @@ function renderLoanTable(loans) {
   // Render rows
   // -------------------------
   tbody.innerHTML = "";
-
   loans.forEach(loan => {
     const tr = document.createElement("tr");
-// MATCH ROI — event row shading
-if (loan.eventType === "prepayment") tr.classList.add("event-prepayment");
-if (loan.eventType === "deferral")   tr.classList.add("event-deferral");
-if (loan.eventType === "default")    tr.classList.add("event-default");
 
-    
+    // MATCH ROI — event row shading
+    if (loan.eventType === "prepayment") tr.classList.add("event-prepayment");
+    if (loan.eventType === "deferral")   tr.classList.add("event-deferral");
+    if (loan.eventType === "default")    tr.classList.add("event-default");
+
     tr.tabIndex = 0;
     tr.style.cursor = "pointer";
 
-const pct = Math.max(0, Math.min(1, loan.ownershipPct ?? 0));
+    const pct = Math.max(0, Math.min(1, loan.ownershipPct ?? 0));
 
-    
+    // Build events column manually so we can attach hover listeners to each badge
+    let eventsContent = "";
+    if (loan.events?.length > 0) {
+      loan.events.forEach(event => {
+        const badgeClass = `event-badge mini ${event.type}`;
+        const icon = ICONS?.[event.type] || '';  // use your ICONS object if defined
+
+        // Store event data on the badge for tooltip
+        const eventData = JSON.stringify(event).replace(/"/g, '&quot;');
+
+        eventsContent += `
+          <span class="${badgeClass}"
+                data-event='${eventData}'
+                title="">  <!-- title="" prevents native browser tooltip -->
+            ${icon}
+          </span>
+        `;
+      });
+    } else {
+      eventsContent = "—";
+    }
+
     tr.innerHTML = `
       <td>${loan.loanId ?? ""}</td>
-      <td>${renderTableEventBadge(loan)}</td>
+      <td>${eventsContent}</td>
       <td>${loan.loanName ?? ""}</td>
       <td>${loan.school ?? ""}</td>
       <td>${loan.loanStartDate ? formatDate(new Date(loan.loanStartDate)) : ""}</td>
@@ -4452,17 +4476,34 @@ const pct = Math.max(0, Math.min(1, loan.ownershipPct ?? 0));
       <td>${loan.graceYears ?? 0}</td>
       <td>${(pct * 100).toFixed(1)}%</td>
       <td>${formatCurrency(getCurrentNetEarnings(loan))}</td>
-</td>
-
     `;
 
+    // Attach hover listeners to each badge after it's in the DOM
+    const badges = tr.querySelectorAll('.event-badge');
+    badges.forEach(badge => {
+      badge.addEventListener('mouseenter', (e) => {
+        const eventJson = badge.dataset.event;
+        if (eventJson) {
+          try {
+            const event = JSON.parse(eventJson);
+            const text = getEventBadgeTooltip(event);  // your tooltip function
+            if (text) showTooltip(e, text);
+          } catch (err) {
+            console.warn("Failed to parse event for tooltip", err);
+          }
+        }
+      });
+
+      badge.addEventListener('mouseleave', hideTooltip);
+    });
+
+    // Existing row hover & click handlers
     tr.addEventListener("mouseenter", () => tr.classList.add("row-hover"));
     tr.addEventListener("mouseleave", () => tr.classList.remove("row-hover"));
 
     const openLoan = () => {
-  
-  openLoanDrawerSafe(loan);
-};
+      openLoanDrawerSafe(loan);
+    };
 
     tr.addEventListener("click", openLoan);
     tr.addEventListener("keydown", (e) => {
