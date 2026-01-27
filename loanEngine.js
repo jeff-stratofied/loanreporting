@@ -369,7 +369,7 @@ function normalizeDate(d) {
 //
 
 export function buildAmortSchedule(loan) {
-
+/* debug
 console.log("DEBUG: Loan arriving in buildAmortSchedule:", {
   loanId:     loan.loanId ?? "MISSING",
   loanName:   loan.loanName ?? "MISSING",
@@ -388,7 +388,9 @@ console.log("DEBUG: Loan arriving in buildAmortSchedule:", {
 });
   
   console.log(`buildAmortSchedule called for ${loan.loanName || loan.id || "unknown"} (call #${(window.amortCallCount = (window.amortCallCount || 0) + 1)})`);
+*/
 
+  
   const {
     principal,
     nominalRate,
@@ -444,7 +446,7 @@ const user =
     ? USERS[userId]
     : { role: "investor", feeWaiver: "none" };
 
-
+/* debug and test
 // ──────────────────────────────────────────────────────────────
 // TEMPORARY FEE WAIVER TESTING BLOCK - REMOVE AFTER CONFIRMATION
 // ──────────────────────────────────────────────────────────────
@@ -467,6 +469,7 @@ if (isTestWaiverLoan) {
     window[testKey] = true;
   }
 }
+*/
   
   // Ownership always begins at the first of purchase month
   const purchaseMonth = new Date(
@@ -1079,9 +1082,12 @@ loansWithAmort.forEach(loan => {
       balance: r.balance
     };
 
+/* debug
 console.log(`DEBUG: Processing loan in buildPortfolioViews: ${loan.loanName || loan.id || "unknown"}`);
 console.log(`DEBUG: Waiver check - loanName: "${loan.loanName || ""}", matches any? ${waivedLoanNames.some(name => (loan.loanName || "").includes(name))}`);
-  
+*/
+
+/* debug and test code
 // ──────────────────────────────────────────────────────────────
 // TEMP: Earnings impact check for waived/test loans
 // ──────────────────────────────────────────────────────────────
@@ -1108,7 +1114,8 @@ if (isTestWaiverLoan) {
     lastFeeMonth:   lastRow.monthlyFees?.toFixed(2)    ?? "0.00"
   });
 }
-    
+*/
+  
   });
 
 
