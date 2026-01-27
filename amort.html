@@ -1376,8 +1376,10 @@ async function loadAndNormalizeLoans() {
 // =========================================
 // 🔑 FILTER TO USER-OWNED LOANS ONLY
 // =========================================
+const currentUser = USERS[PAGE_CONTEXT.user];
+
 const ownedLoans = rawLoans.filter(l =>
-  isOwnedByUser(l, PAGE_CONTEXT.user)
+  isOwnedByUser(l, currentUser)
 );
 
   console.log('Filtered owned loans count:', ownedLoans.length);
