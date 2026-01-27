@@ -370,27 +370,6 @@ function normalizeDate(d) {
 
 export function buildAmortSchedule(loan) {
 
-console.log("DEBUG: Loan arriving in buildAmortSchedule:", {
-  loanId:     loan.loanId ?? "MISSING",
-  loanName:   loan.loanName ?? "MISSING",
-  name:       loan.name ?? "MISSING",
-  school:     loan.school ?? "MISSING",
-  principal:  loan.principal ?? "MISSING",
-  nominalRate: loan.nominalRate ?? "MISSING",
-  purchaseDate: loan.purchaseDate ?? "MISSING",
-  loanStartDate: loan.loanStartDate ?? "MISSING",
-  ownershipLots: loan.ownershipLots ? 
-    loan.ownershipLots.map(lot => `${lot.user} ${lot.pct*100}% ${lot.purchaseDate || '?'}`) : 
-    "MISSING",
-  feeWaiver:  loan.feeWaiver ?? "none (not set yet)",
-  user:       loan.user ?? "MISSING",
-  owner:      loan.owner ?? "MISSING"
-});
-  
-  console.log(`buildAmortSchedule called for ${loan.loanName || loan.id || "unknown"} (call #${(window.amortCallCount = (window.amortCallCount || 0) + 1)})`);
-
-
-  
   const {
     principal,
     nominalRate,
@@ -446,30 +425,6 @@ const user =
     ? USERS[userId]
     : { role: "investor", feeWaiver: "none" };
 
-/* debug and test
-// ──────────────────────────────────────────────────────────────
-// TEMPORARY FEE WAIVER TESTING BLOCK - REMOVE AFTER CONFIRMATION
-// ──────────────────────────────────────────────────────────────
-const loanName = loan.loanName || loan.id || "unknown";
-const isTestWaiverLoan =
-  loan.loanId === "C0RAT4N23A" ||                           // ← your known ID
-  (loan.principal === 3500 && loan.nominalRate === 8.00 && 
-   (loan.school?.toLowerCase().includes("ohio") || loan.school?.includes("OSU"))) ||
-  ["OSU 2024 8.00", "PSU 2024 8.83", "CMU 2024 9.00", "MICH 2024 9.00"]
-    .some(n => loanName.includes(n));
-
-if (isTestWaiverLoan) {
-  // Force waiver logic (your current code)
-  loan.feeWaiver = "all";   // or whatever level you want for OSU
-  console.log(`TEMP: Forced full waiver on ${loanName} (ID=${loan.loanId}, principal=${loan.principal}, rate=${loan.nominalRate}, school=${loan.school || 'none'})`);
-
-  // Optional: one-time guard if you still want it
-  const testKey = `waiver-test-${loan.loanId || loanName.replace(/\s+/g, '-')}`;
-  if (!window[testKey]) {
-    window[testKey] = true;
-  }
-}
-*/
   
   // Ownership always begins at the first of purchase month
   const purchaseMonth = new Date(
@@ -652,28 +607,6 @@ const isFirstOwnedMonth =
   const { waiveMonthly } =
     resolveFeeWaiverFlags(user, loan);
 
-  /* debug
-  // ── Optional: one-time debug for first deferral month ────────────────────────
-const isFirstDeferralMonth = deferralRemaining === deferralTotal - 1;
-
-if (deferralRemaining > 0 && isFirstDeferralMonth) {
-  const loanId = loan.loanName || loan.id || "unknown";
-  const debugKey = `waiver-deferral-debug-${loanId}`;
-
-  if (!window[debugKey]) {
-    console.log(`DEBUG: resolveFeeWaiverFlags (first deferral month) for loan ${loanId}:`, {
-      waiveMonthly,
-      effectiveWaiver: (loan?.feeWaiver || user?.feeWaiver || 'none'),
-      isOwned,
-      balanceBeforeFee: balance.toFixed(2),
-      servicingRate: MONTHLY_SERVICING_RATE,
-      wouldChargeFee: isOwned && !waiveMonthly
-    });
-    window[debugKey] = true;
-  }
-}
-// ───────────────────────────────────────────────────────────────────────────────
-*/
 
   let feeThisMonth = 0;
   if (isOwned && !waiveMonthly) {
@@ -772,21 +705,7 @@ if (deferralRemaining > 0 && isFirstDeferralMonth) {
     resolveFeeWaiverFlags(user, loan);
 
   const loanId = loan.loanName || loan.id || loan.id || "unknown";
-const debugOnceKey = `waiver-debug-${loanId}`;
 
- /* debug code 
-if (!window[debugOnceKey]) {
-  console.log(`DEBUG: resolveFeeWaiverFlags (normal month sample) for loan ${loanId}:`, {
-    waiveSetup,
-    waiveMonthly,
-    effectiveWaiver: (loan?.feeWaiver || user?.feeWaiver || 'none'),
-    firstOwnedMonth: isFirstOwnedMonth,
-    isOwned,
-    ownerRole: user?.role
-  });
-  window[debugOnceKey] = true;
-}
-*/
   let feeThisMonth = 0;
 
   if (isFirstOwnedMonth && ownerIsLender && !waiveSetup) {
@@ -883,25 +802,6 @@ export function getCurrentLoanBalance(loan, today = new Date()) {
 
 export function attachSchedules(input) {
   let loans = input;
-
-  console.log("[attachSchedules] received:", {
-    isArray: Array.isArray(loans),
-    length: loans?.length,
-    looksLikeRawResponse: loans && "loans" in loans && "sha" in loans,
-    firstItemKeys: loans?.[0] ? Object.keys(loans[0]).sort() : "no items",
-    firstLoanName: loans?.[0]?.loanName ?? "undefined",
-    caller: new Error().stack.split("\n")[2]?.trim()   // ← shows who called us
-  });
-
-  if (!Array.isArray(loans)) {
-    if (loans && Array.isArray(loans.loans)) {
-      console.warn("FIXING: was passed {loans, sha} — using .loans");
-      loans = loans.loans;
-    } else {
-      console.error("attachSchedules got invalid input", loans);
-      return [];
-    }
-  }
 
   return loans.map(loan => ({
     ...loan,
@@ -1081,41 +981,6 @@ loansWithAmort.forEach(loan => {
 
       balance: r.balance
     };
-
-/* debug
-console.log(`DEBUG: Processing loan in buildPortfolioViews: ${loan.loanName || loan.id || "unknown"}`);
-console.log(`DEBUG: Waiver check - loanName: "${loan.loanName || ""}", matches any? ${waivedLoanNames.some(name => (loan.loanName || "").includes(name))}`);
-*/
-
-/* debug and test code
-// ──────────────────────────────────────────────────────────────
-// TEMP: Earnings impact check for waived/test loans
-// ──────────────────────────────────────────────────────────────
-const loanName = loan.loanName || loan.id || "unknown";
-const isTestWaiverLoan =
-  loan.loanId === "C0RAT4N23A" ||
-  (loan.principal === 3500 && loan.nominalRate === 8.00 && 
-   (loan.school?.toLowerCase().includes("ohio") || loan.school?.includes("OSU"))) ||
-  ["OSU 2024 8.00", "PSU 2024 8.83", "CMU 2024 9.00", "MICH 2024 9.00"]
-    .some(n => loanName.includes(n));
-
-if (isTestWaiverLoan) {
-  const lastRow = timeline[timeline.length - 1] || {};
-  console.log(`EARNINGS IMPACT - ${loanName} (ID=${loan.loanId || 'no-id'}):`, {
-    feeWaiverFinal: loan.feeWaiver || "none",
-    cumFees:        lastRow.cumFees?.toFixed(2)        ?? "0.00",
-    netEarnings:    lastRow.netEarnings?.toFixed(2)    ?? "0.00",
-    totalMonths:    timeline.length,
-    ownedMonths:    timeline.filter(r => r.isOwned).length,
-    cumPrincipal:   lastRow.cumPrincipal?.toFixed(2)   ?? "0.00",
-    cumInterest:    lastRow.cumInterest?.toFixed(2)    ?? "0.00",
-    hasGrace:       loan.graceYears > 0,
-    hasDeferral:    loan.events?.some(e => e.type === "deferral") ?? false,
-    lastFeeMonth:   lastRow.monthlyFees?.toFixed(2)    ?? "0.00"
-  });
-}
-*/
-  
   });
 
 
