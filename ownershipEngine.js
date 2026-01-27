@@ -89,7 +89,14 @@ export function getUserOwnershipPct(loan, user) {
 
 
 export function isOwnedByUser(loan, user) {
-  return getUserOwnershipPct(loan, user) > 0;
+  const userId =
+    typeof user === "string"
+      ? user
+      : user?.id || user?.user || null;
+
+  if (!userId) return false;
+
+  return getUserOwnershipPct(loan, userId) > 0;
 }
 
 export function getMarketPct(loan) {
