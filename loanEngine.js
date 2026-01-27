@@ -878,12 +878,31 @@ export function getCurrentLoanBalance(loan, today = new Date()) {
 // Attach schedules to all loans
 // -------------------------------
 
-export function attachSchedules(loans) {
+export function attachSchedules(input) {
+  let loans = input;
+
+  console.log("[attachSchedules] received:", {
+    isArray: Array.isArray(loans),
+    length: loans?.length,
+    looksLikeRawResponse: loans && "loans" in loans && "sha" in loans,
+    firstItemKeys: loans?.[0] ? Object.keys(loans[0]).sort() : "no items",
+    firstLoanName: loans?.[0]?.loanName ?? "undefined",
+    caller: new Error().stack.split("\n")[2]?.trim()   // ← shows who called us
+  });
+
+  if (!Array.isArray(loans)) {
+    if (loans && Array.isArray(loans.loans)) {
+      console.warn("FIXING: was passed {loans, sha} — using .loans");
+      loans = loans.loans;
+    } else {
+      console.error("attachSchedules got invalid input", loans);
+      return [];
+    }
+  }
+
   return loans.map(loan => ({
     ...loan,
-    amort: {
-      schedule: buildAmortSchedule(loan)
-    }
+    amort: { schedule: buildAmortSchedule(loan) }
   }));
 }
 
