@@ -433,10 +433,14 @@ const loanName = loan.loanName || loan.id || "unknown";
 
 const testKey = `waiver-test-${loanName.replace(/\s+/g, '-')}`;
 if (!window[testKey]) {
-  if (loanName.includes("OSU 2024 8.00")) {
-    loan.feeWaiver = "all";
-    console.log(`TEMP TEST: Forced loan.feeWaiver = "all" on ${loanName}`);
-  } else if (loanName.includes("PSU 2024 8.83")) {
+  if (
+  loan.principal === 3500 &&                // or whatever the orig amt is
+  loan.nominalRate === 8.00 &&
+  loan.school?.toLowerCase().includes("ohio") || loan.school?.includes("OSU")
+) {
+  loan.feeWaiver = "all";
+  console.log(`TEMP: Forced full waiver on loan matching OSU criteria (principal=${loan.principal}, rate=${loan.nominalRate})`);
+} else if (loanName.includes("PSU 2024 8.83")) {
     loan.feeWaiver = "setup";
     console.log(`TEMP TEST: Forced loan.feeWaiver = "setup" on ${loanName}`);
   } else if (loanName.includes("CMU 2024 9.00")) {
