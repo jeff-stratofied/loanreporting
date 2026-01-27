@@ -515,6 +515,12 @@ const MONTHLY_SERVICING_RATE = getMonthlyServicingRate(feeConfig);
 const { waiveSetup, waiveMonthly } =
   resolveFeeWaiverFlags(user, loan);
 
+  console.log('DEBUG: resolveFeeWaiverFlags result for loan', loan.loanName || loan.id, ':', {
+  waiveSetup,
+  waiveMonthly,
+  effectiveWaiver: (loan?.feeWaiver || user?.feeWaiver || 'none')
+});    
+
 const isFirstOwnedMonth =
   isOwned &&
   loanDate.getFullYear() === purchaseMonth.getFullYear() &&
@@ -530,11 +536,6 @@ const isFirstOwnedMonth =
     loanDate.getMonth() === purchaseMonth.getMonth();
 
   const ownerIsLender = user?.role === "lender";
-
-  /* delete
-  const { waiveSetup, waiveMonthly } =
-    resolveFeeWaiverFlags(user, loan);
-*/
   
   let feeThisMonth = 0;
 
