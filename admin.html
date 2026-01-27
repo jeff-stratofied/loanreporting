@@ -1027,12 +1027,13 @@ inputs.forEach(inp => {
   const k = inp.dataset.field;
   if (!ALLOWED_FIELDS.has(k)) return;
 
-  if (k === "rate") {
-  v = Number(v) / 100; // convert % back to decimal
-} else if (["principal","termYears","graceYears"].includes(k)) {
-  v = Number(v);
-}
+  let v = inp.value;  // Add this line to fix the error
 
+  if (k === "rate") {
+    v = Number(v) / 100; // convert % back to decimal
+  } else if (["principal","termYears","graceYears"].includes(k)) {
+    v = Number(v);
+  }
 
   obj[k] = v;
 });
