@@ -73,8 +73,7 @@ if (!Array.isArray(loan.ownershipLots)) {
 // Ownership helpers
 // -------------------------------------
 export function getUserOwnershipPct(loan, user) {
-  // Normalize input user ID
-  const normalizedUser = String(user).trim().toLowerCase();
+  const normalizedUser = String(user || '').trim().toLowerCase();
 
   if (Array.isArray(loan.ownershipLots)) {
     return loan.ownershipLots
