@@ -1053,7 +1053,27 @@ loansWithAmort.forEach(loan => {
     };
   });
 
-
+// ──────────────────────────────────────────────────────────────
+    // TEMP: Earnings impact check for waived loans
+    // ──────────────────────────────────────────────────────────────
+    const waivedLoanNames = ["OSU 2024 8.00", "PSU 2024 8.83", "CMU 2024 9.00", "MICH 2024 9.00"];
+    
+    if (waivedLoanNames.some(name => (loan.loanName || "").includes(name))) {
+      const lastRow = timeline[timeline.length - 1] || {};
+      console.log(`EARNINGS IMPACT - ${loan.loanName || loan.id || "unknown"}:`, {
+        cumFees:        lastRow.cumFees?.toFixed(2)        ?? "0.00",
+        netEarnings:    lastRow.netEarnings?.toFixed(2)    ?? "0.00",
+        totalMonths:    timeline.length,
+        ownedMonths:    timeline.filter(r => r.isOwned).length,
+        cumPrincipal:   lastRow.cumPrincipal?.toFixed(2)   ?? "0.00",
+        cumInterest:    lastRow.cumInterest?.toFixed(2)    ?? "0.00",
+        hasGrace:       loan.graceYears > 0,
+        hasDeferral:    loan.events?.some(e => e.type === "deferral") ?? false,
+        lastFeeMonth:   lastRow.monthlyFees?.toFixed(2)    ?? "0.00"
+      });
+    }
+    // ──────────────────────────────────────────────────────────────
+  
 // -------------------------------------------------
 // DISPLAY timeline (INVESTOR VIEW — starts at first owned month)
 // -------------------------------------------------
