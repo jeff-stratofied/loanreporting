@@ -20,6 +20,7 @@ export async function loadLoans() {
 
     const data = await res.json();
 
+    /* debug
     console.log("RAW API RESPONSE SHAPE:", {
     hasLoansKey: "loans" in data,
     loansCount: data.loans?.length ?? "no loans array",
@@ -33,7 +34,8 @@ export async function loadLoans() {
       loanStartDate: data.loans[0].loanStartDate
     } : "no first loan"
   });
-
+*/
+    
   if (Array.isArray(data.loans)) {
     return data;
   }
