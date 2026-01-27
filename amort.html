@@ -1458,6 +1458,15 @@ async function loadAndNormalizeLoans() {
     });
   }
 
+loanData.slice(0, 3).forEach(loan => {
+  console.log("🧪 ownership test", {
+    loanId: loan.id,
+    lots: loan.ownershipLots,
+    pctWithString: getUserOwnershipPct(loan, "jeff"),
+    pctWithUserObj: getUserOwnershipPct(loan, USERS["jeff"])
+  });
+});
+  
   // --------------------------------------------------
   // 6️⃣ FILTER TO USER-OWNED LOANS ONLY
   // --------------------------------------------------
