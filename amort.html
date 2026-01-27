@@ -1463,7 +1463,7 @@ loanData.slice(0, 3).forEach(loan => {
     loanId: loan.id,
     lots: loan.ownershipLots,
     pctWithString: getUserOwnershipPct(loan, "jeff"),
-    pctWithUserObj: getUserOwnershipPct(loan, USERS["jeff"])
+    pctViaIsOwned: isOwnedByUser(loan, USERS["jeff"])
   });
 });
   
