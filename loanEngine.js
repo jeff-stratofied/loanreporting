@@ -370,6 +370,23 @@ function normalizeDate(d) {
 
 export function buildAmortSchedule(loan) {
 
+console.log("DEBUG: Loan arriving in buildAmortSchedule:", {
+  loanId:     loan.loanId ?? "MISSING",
+  loanName:   loan.loanName ?? "MISSING",
+  name:       loan.name ?? "MISSING",
+  school:     loan.school ?? "MISSING",
+  principal:  loan.principal ?? "MISSING",
+  nominalRate: loan.nominalRate ?? "MISSING",
+  purchaseDate: loan.purchaseDate ?? "MISSING",
+  loanStartDate: loan.loanStartDate ?? "MISSING",
+  ownershipLots: loan.ownershipLots ? 
+    loan.ownershipLots.map(lot => `${lot.user} ${lot.pct*100}% ${lot.purchaseDate || '?'}`) : 
+    "MISSING",
+  feeWaiver:  loan.feeWaiver ?? "none (not set yet)",
+  user:       loan.user ?? "MISSING",
+  owner:      loan.owner ?? "MISSING"
+});
+  
   console.log(`buildAmortSchedule called for ${loan.loanName || loan.id || "unknown"} (call #${(window.amortCallCount = (window.amortCallCount || 0) + 1)})`);
 
   const {
