@@ -1174,7 +1174,7 @@ import { buildPortfolioViews } from './loanEngine.js?v=dev';
    PAGE CONTEXT (single source of truth)
    ========================================================= */
 // Load platform config (stable fallback)
-await loadPlatformConfig('/loanreporting/platformConfig.json');  // Adjust path if needed
+await loadPlatformConfig('/loanreporting/data/platformConfig.json?v=dev');  // Adjust path if needed
     
 const PAGE_CONTEXT = (() => {
   const params = new URLSearchParams(window.location.search);
@@ -1478,7 +1478,7 @@ async function init() {
        0) LOAD PLATFORM CONFIG (early, for fees/roles later)
        ===================================================== */
     try {
-      await loadPlatformConfig('/loanreporting/platformConfig.json');  // adjust path if needed
+      await loadPlatformConfig('/loanreporting/data/platformConfig.json?v=dev');  // adjust path if needed
     } catch (configErr) {
       console.warn("Platform config load failed, using defaults:", configErr);
       // Fallback defaults (matches your current behavior)
