@@ -1189,7 +1189,7 @@ updated.forEach(loan => {
     const data = await res.json();
     if (!res.ok) throw data;
 
-    currentSha = data.content.sha;
+    currentSha = data.sha;
     status.textContent = "Saved ✔";
     clearDirty();
 
