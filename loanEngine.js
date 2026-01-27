@@ -369,7 +369,7 @@ function normalizeDate(d) {
 //
 
 export function buildAmortSchedule(loan) {
-/* debug
+
 console.log("DEBUG: Loan arriving in buildAmortSchedule:", {
   loanId:     loan.loanId ?? "MISSING",
   loanName:   loan.loanName ?? "MISSING",
@@ -388,7 +388,7 @@ console.log("DEBUG: Loan arriving in buildAmortSchedule:", {
 });
   
   console.log(`buildAmortSchedule called for ${loan.loanName || loan.id || "unknown"} (call #${(window.amortCallCount = (window.amortCallCount || 0) + 1)})`);
-*/
+
 
   
   const {
