@@ -607,6 +607,7 @@ const isFirstOwnedMonth =
   const { waiveMonthly } =
     resolveFeeWaiverFlags(user, loan);
 
+  /* debug
   // ── Optional: one-time debug for first deferral month ────────────────────────
 const isFirstDeferralMonth = deferralRemaining === deferralTotal - 1;
 
@@ -627,6 +628,7 @@ if (deferralRemaining > 0 && isFirstDeferralMonth) {
   }
 }
 // ───────────────────────────────────────────────────────────────────────────────
+*/
 
   let feeThisMonth = 0;
   if (isOwned && !waiveMonthly) {
