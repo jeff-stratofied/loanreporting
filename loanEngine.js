@@ -499,29 +499,27 @@ const MONTHLY_SERVICING_RATE = getMonthlyServicingRate(feeConfig);
   // -------------------------------
   for (let i = 0; i < totalMonths; ) {
 
-    // ==============================
-    // DEFAULT (terminal)
-    // ==============================
-    if (
-      defaultMonthKey &&
-      monthKeyFromDate(calendarDate) === defaultMonthKey
-    ) {
-      const loanDate = new Date(calendarDate);
-      const applied = Math.min(balance, defaultRecovery);
-      const isOwned = loanDate >= purchaseMonth;
-
-// Resolve waivers ONCE per row
-const { waiveSetup, waiveMonthly } =
-  resolveFeeWaiverFlags(user, loan);
-
-const isFirstOwnedMonth =
-  isOwned &&
-  loanDate.getFullYear() === purchaseMonth.getFullYear() &&
-  loanDate.getMonth() === purchaseMonth.getMonth();
-
-// 🔑 REAL user context
-{
+// ==============================
+// DEFAULT (terminal)
+// ==============================
+if (
+  defaultMonthKey &&
+  monthKeyFromDate(calendarDate) === defaultMonthKey
+) {
+  const loanDate = new Date(calendarDate);
+  const applied = Math.min(balance, defaultRecovery);
   const isOwned = loanDate >= purchaseMonth;
+
+  // Resolve waivers ONCE per row (only once)
+  const { waiveSetup, waiveMonthlyDuringGrace, waiveAll } = resolveFeeWaiverFlags(user, loan);
+
+  // Debug log (keep for now, remove later)
+  console.log('DEBUG: resolveFeeWaiverFlags result for loan', loan.loanName || loan.id, ':', {
+    waiveSetup,
+    waiveMonthlyDuringGrace,
+    waiveAll,
+    effectiveWaiver: (loan?.feeWaiver || user?.feeWaiver || 'none')
+  });
 
   const isFirstOwnedMonth =
     isOwned &&
@@ -529,54 +527,46 @@ const isFirstOwnedMonth =
     loanDate.getMonth() === purchaseMonth.getMonth();
 
   const ownerIsLender = user?.role === "lender";
-  const { waiveSetup, waiveMonthly } =
-    resolveFeeWaiverFlags(user, loan);
-
-  console.log('DEBUG: resolveFeeWaiverFlags result for loan', loan.loanName || loan.id, ':', {
-  waiveSetup,
-  waiveMonthly,
-  effectiveWaiver: (loan?.feeWaiver || user?.feeWaiver || 'none')
-});
 
   let feeThisMonth = 0;
 
-  if (isFirstOwnedMonth && ownerIsLender && !waiveSetup) {
-    feeThisMonth += SETUP_FEE_AMOUNT;
-  }
+  if (waiveAll) {
+    feeThisMonth = 0;  // Complete waiver
+  } else {
+    if (isFirstOwnedMonth && ownerIsLender && !waiveSetup) {
+      feeThisMonth += SETUP_FEE_AMOUNT;
+    }
 
-  if (isOwned && !waiveMonthly) {
-    feeThisMonth += balance * MONTHLY_SERVICING_RATE;
+    // For defaulted loans, monthly servicing usually stops after default,
+    // but if you want to apply it conditionally (or waive), keep this:
+    if (isOwned) {
+      feeThisMonth += balance * MONTHLY_SERVICING_RATE;  // or add waiver logic if needed
+    }
   }
 
   schedule.push(
     normalizeDeferralFlags({
-          monthIndex: schedule.length + 1,
-          loanDate,
-          displayDate: new Date(loanDate.getFullYear(), loanDate.getMonth(), 1),
-
-          payment: +applied.toFixed(2),
-          principalPaid: +applied.toFixed(2),
-          interest: 0,
-          balance: +(balance - applied).toFixed(2),
-
-          prepayment: 0,
-          accruedInterest: 0,
-
-          feeThisMonth: +feeThisMonth.toFixed(2),
-
-          isOwned,
-          ownershipDate: isOwned ? loanDate : null,
-
-          defaulted: true,
-          isTerminal: true,
-          recovery: +applied.toFixed(2),
-          contractualMonth: i + 1
-      })
+      monthIndex: schedule.length + 1,
+      loanDate,
+      displayDate: new Date(loanDate.getFullYear(), loanDate.getMonth(), 1),
+      payment: +applied.toFixed(2),
+      principalPaid: +applied.toFixed(2),
+      interest: 0,
+      balance: +(balance - applied).toFixed(2),
+      prepayment: 0,
+      accruedInterest: 0,
+      feeThisMonth: +feeThisMonth.toFixed(2),
+      isOwned,
+      ownershipDate: isOwned ? loanDate : null,
+      defaulted: true,
+      isTerminal: true,
+      recovery: +applied.toFixed(2),
+      contractualMonth: i + 1
+    })
   );
-}
 
-      break;
-    }
+  break;
+}
 
     // ==============================
     // DEFERRAL START
