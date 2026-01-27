@@ -1515,32 +1515,10 @@ allLoans.forEach(loan => {
 
 
 async function init() {
-  /*
-  1) LOAD + NORMALIZE DATA
-  ---------------------------- */
-  
-  await loadPlatformConfig(
-    "https://raw.githubusercontent.com/jeff-stratofied/loanreporting/main/data/platformConfig.json"
-  );
-  console.log('Loaded config:', GLOBAL_FEE_CONFIG, USERS);
-  
-  console.log("📡 Calling loadLoans()...");
+  /* =====================================================
+     1) LOAD + NORMALIZE DATA
+     ===================================================== */
 
-console.log("📦 loadLoans() result:", {
-  exists: !!loanData,
-  type: typeof loanData,
-  isArray: Array.isArray(loanData),
-  keys: loanData && !Array.isArray(loanData) ? Object.keys(loanData) : null,
-  length: Array.isArray(loanData) ? loanData.length : null,
-  sample: Array.isArray(loanData) ? loanData[0] : loanData
-});
-
-window.__AMORT_DEBUG__ = window.__AMORT_DEBUG__ || {};
-window.__AMORT_DEBUG__.loanData = loanData;
-
-  console.log('Raw loans count:', rawLoans.length);  // ← Updated: now counts the array
-  console.log('Sample raw loan ownershipLots:', rawLoans[0]?.ownershipLots);  // ← Updated: accesses array[0]
-  
   /* ---------------------------------------------------------
      DATA FREEZE POINT
      After this line:
@@ -1548,29 +1526,8 @@ window.__AMORT_DEBUG__.loanData = loanData;
      - currentLoans
      MUST NOT be mutated
      --------------------------------------------------------- */
-currentLoans = [...allLoans];
+  await loadAndNormalizeLoans();
 
-console.log("🧱 currentLoans ready", {
-count: currentLoans.length,
-sample: currentLoans[0]
-});
-  
-console.log(
-  "🔍 ownershipLots sanity:",
-  rawLoans?.slice(0, 3).map(l => ({
-    id: l.id,
-    hasOwnershipLots: Array.isArray(l.ownershipLots),
-    ownershipLots: l.ownershipLots
-  }))
-);
-  
-const currentUser = PAGE_CONTEXT.user;
-  const userRole = USERS[currentUser]?.role || 'investor';  // Default to investor
-
-  console.log('User ID:', currentUser);  // Already there
-
-  
-  
   /* =====================================================
      2) KPI COLOR MAP — MATCH ROI PAGE (SOURCE OF TRUTH)
      ===================================================== */
