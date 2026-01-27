@@ -607,6 +607,27 @@ const isFirstOwnedMonth =
   const { waiveMonthly } =
     resolveFeeWaiverFlags(user, loan);
 
+  // ── Optional: one-time debug for first deferral month ────────────────────────
+const isFirstDeferralMonth = deferralRemaining === deferralTotal - 1;
+
+if (deferralRemaining > 0 && isFirstDeferralMonth) {
+  const loanId = loan.loanName || loan.id || "unknown";
+  const debugKey = `waiver-deferral-debug-${loanId}`;
+
+  if (!window[debugKey]) {
+    console.log(`DEBUG: resolveFeeWaiverFlags (first deferral month) for loan ${loanId}:`, {
+      waiveMonthly,
+      effectiveWaiver: (loan?.feeWaiver || user?.feeWaiver || 'none'),
+      isOwned,
+      balanceBeforeFee: balance.toFixed(2),
+      servicingRate: MONTHLY_SERVICING_RATE,
+      wouldChargeFee: isOwned && !waiveMonthly
+    });
+    window[debugKey] = true;
+  }
+}
+// ───────────────────────────────────────────────────────────────────────────────
+
   let feeThisMonth = 0;
   if (isOwned && !waiveMonthly) {
     feeThisMonth += balance * MONTHLY_SERVICING_RATE;
@@ -706,6 +727,7 @@ const isFirstOwnedMonth =
   const loanId = loan.loanName || loan.id || loan.id || "unknown";
 const debugOnceKey = `waiver-debug-${loanId}`;
 
+ /* debug code 
 if (!window[debugOnceKey]) {
   console.log(`DEBUG: resolveFeeWaiverFlags (normal month sample) for loan ${loanId}:`, {
     waiveSetup,
@@ -717,7 +739,7 @@ if (!window[debugOnceKey]) {
   });
   window[debugOnceKey] = true;
 }
-
+*/
   let feeThisMonth = 0;
 
   if (isFirstOwnedMonth && ownerIsLender && !waiveSetup) {
