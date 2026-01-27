@@ -1397,12 +1397,53 @@ window.__AMORT_DEBUG__.loanData = loanData;
 // =========================================
 // 🔑 FILTER TO USER-OWNED LOANS ONLY
 // =========================================
-const currentUser = USERS[PAGE_CONTEXT.user];
+
+  /* hide
+  const currentUser = USERS[PAGE_CONTEXT.user];
 
 const ownedLoans = rawLoans.filter(l =>
   isOwnedByUser(l, currentUser)
 );
+*/
 
+console.log("👤 PAGE_CONTEXT.user:", PAGE_CONTEXT.user, typeof PAGE_CONTEXT.user);
+console.log("👥 USERS keys:", Object.keys(USERS || {}));
+
+const currentUser =
+  typeof PAGE_CONTEXT.user === "string"
+    ? USERS?.[PAGE_CONTEXT.user]
+    : PAGE_CONTEXT.user;
+
+console.log("👤 Resolved currentUser:", currentUser);
+
+const ownedLoans = loanData.filter((loan, idx) => {
+  let pct;
+  try {
+    pct = getUserOwnershipPct(loan, currentUser);
+  } catch (e) {
+    console.error("❌ getUserOwnershipPct threw", {
+      loanId: loan?.id,
+      error: e
+    });
+    return false;
+  }
+
+  if (idx < 3) {
+    console.log("🏦 ownership debug", {
+      loanId: loan.id,
+      pct,
+      ownershipLots: loan.ownershipLots
+    });
+  }
+
+  return pct > 0;
+});
+
+console.log("✅ Owned loans count:", ownedLoans.length);
+
+window.__AMORT_DEBUG__ = window.__AMORT_DEBUG__ || {};
+window.__AMORT_DEBUG__.ownedLoans = ownedLoans;
+  
   console.log('Filtered owned loans count:', ownedLoans.length);
   
 // =========================================
