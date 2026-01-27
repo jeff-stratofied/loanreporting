@@ -514,12 +514,13 @@ if (
   const { waiveSetup, waiveMonthlyDuringGrace, waiveAll } = resolveFeeWaiverFlags(user, loan);
 
   // Debug log (keep for now, remove later)
-  console.log('DEBUG: resolveFeeWaiverFlags result for loan', loan.loanName || loan.id, ':', {
-    waiveSetup,
-    waiveMonthlyDuringGrace,
-    waiveAll,
-    effectiveWaiver: (loan?.feeWaiver || user?.feeWaiver || 'none')
-  });
+// Only log once per loan
+if (!window.__loggedLoans) window.__loggedLoans = new Set();
+const loanId = loan.loanName || loan.id;
+if (!window.__loggedLoans.has(loanId)) {
+  console.log('DEBUG: resolveFeeWaiverFlags (first call) for loan', loanId, /* ... */);
+  window.__loggedLoans.add(loanId);
+}
 
   const isFirstOwnedMonth =
     isOwned &&
@@ -697,14 +698,8 @@ if (
     loanDate.getMonth() === purchaseMonth.getMonth();
 
   const ownerIsLender = user?.role === "lender";
-  const { waiveSetup, waiveMonthly } =
-    resolveFeeWaiverFlags(user, loan);
+const { waiveSetup, waiveMonthlyDuringGrace, waiveAll } = resolveFeeWaiverFlags(user, loan);
 
-  console.log('DEBUG: resolveFeeWaiverFlags result for loan', loan.loanName || loan.id, ':', {
-  waiveSetup,
-  waiveMonthly,
-  effectiveWaiver: (loan?.feeWaiver || user?.feeWaiver || 'none')
-});
 
   let feeThisMonth = 0;
 
