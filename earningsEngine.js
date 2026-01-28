@@ -107,6 +107,14 @@ console.log("Fees config available in earningsEngine?", {
     hasGlobalConfig: !!GLOBAL_FEE_CONFIG,
     numUsersInConfig: Object.keys(USERS || {}).length
   });
+
+// Use loaded platform config (with fallbacks)
+const setupFeeAmount = GLOBAL_FEE_CONFIG?.setupFee ?? 150;
+const monthlyRate = (GLOBAL_FEE_CONFIG?.monthlyServicingBps ?? 25) / 10000;
+
+// Waiver flags for this user (loan override not yet supported here)
+const userObj = USERS[user] || { feeWaiver: "none" };
+const { waiveSetup, waiveMonthly, waiveAll } = resolveFeeWaiverFlags(userObj, {});
  
   // ----------------------------------------------------------
   // Normalize amort rows with ownership + calendar dates
@@ -163,29 +171,27 @@ console.log("Fees config available in earningsEngine?", {
     // We implement this per-lot by charging $150 for each lot in its start month,
     // and scaling by that lot's pct.
     let upfrontFeeThisMonth = 0;
-
-    if (row.isOwned && Array.isArray(ownershipLots)) {
-      upfrontFeeThisMonth = ownershipLots.reduce((sum, lot) => {
-        if (!lot || lot.user !== user) return sum;
-
-        const start = parseISODateLocal(lot.purchaseDate);
-        if (!(start instanceof Date) || !Number.isFinite(start.getTime())) return sum;
-
-        const startMonth = new Date(start.getFullYear(), start.getMonth(), 1);
-        if (row.loanDate.getTime() !== startMonth.getTime()) return sum;
-
-        // $150 per lot, scaled by pct
-        return sum + 150 * Number(lot.pct || 0);
-      }, 0);
-    }
+if (row.isOwned && Array.isArray(ownershipLots) && !waiveAll && !waiveSetup) {
+  upfrontFeeThisMonth = ownershipLots.reduce((sum, lot) => {
+    if (!lot || lot.user !== user) return sum;
+    const start = parseISODateLocal(lot.purchaseDate);
+    if (!(start instanceof Date) || !Number.isFinite(start.getTime())) return sum;
+    const startMonth = new Date(start.getFullYear(), start.getMonth(), 1);
+    if (row.loanDate.getTime() !== startMonth.getTime()) return sum;
+    return sum + setupFeeAmount * Number(lot.pct || 0);
+  }, 0);
+}
 
     const balance = Number(row.balance ?? 0);
 
     // Monthly balance fee scales by active ownership pct
-    const monthlyBalanceFee =
-      row.isOwned && balance > 0
-        ? +((balance * 0.00125) * Number(row.ownershipPct || 0)).toFixed(2)
-        : 0;
+    let monthlyBalanceFee = 0;
+if (row.isOwned && balance > 0) {
+  const shouldChargeMonthly = !waiveAll && !(deferred && waiveMonthly);
+  if (shouldChargeMonthly) {
+    monthlyBalanceFee = +((balance * monthlyRate) * Number(row.ownershipPct || 0)).toFixed(2);
+  }
+}
 
     const feeThisMonth = upfrontFeeThisMonth + monthlyBalanceFee;
 
