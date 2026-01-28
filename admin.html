@@ -1373,7 +1373,7 @@ obj.ownershipLots = Array.isArray(existing?.ownershipLots)
 
 async function loadFromBackend() {
   try {
-    // Fetch loans first (existing)
+    // 1. Load loans from /loans
     const loansRes = await fetch("https://loanreporting-api.jeff-263.workers.dev/loans");
     if (!loansRes.ok) throw new Error("Loans fetch failed");
     const loansData = await loansRes.json();
@@ -1381,10 +1381,27 @@ async function loadFromBackend() {
     currentLoans = loansData.loans || [];
     currentSha = loansData.sha || null;
 
-    // NEW: Fetch platform config separately
-    const configRes = await fetch("https://loanreporting-api.jeff-263.workers.dev/platformConfig.json");
+    // 2. Load platform config from /platformConfig (this is the missing piece!)
+    const configRes = await fetch("https://loanreporting-api.jeff-263.workers.dev/platformConfig");
+    let configData;
     if (!configRes.ok) {
-      console.warn("platformConfig fetch failed, using fallback");
+      console.warn("platformConfig endpoint failed, trying direct file...");
+      const directRes = await fetch("https://loanreporting-api.jeff-263.workers.dev/data/platformConfig.json");
+      if (directRes.ok) {
+        configData = await directRes.json();
+      }
+    } else {
+      configData = await configRes.json();
+    }
+
+    if (configData) {
+      platformConfig = {
+        fees: configData.fees || { setupFee: 150, monthlyServicingBps: 25 },
+        users: configData.users || [],
+        sha: configData.sha || currentSha
+      };
+    } else {
+      console.warn("No platformConfig loaded — using fallback");
       platformConfig = {
         fees: { setupFee: 150, monthlyServicingBps: 25 },
         users: [
@@ -1394,16 +1411,9 @@ async function loadFromBackend() {
         ],
         sha: currentSha
       };
-    } else {
-      const cfg = await configRes.json();
-      platformConfig = {
-        fees: cfg.fees || { setupFee: 150, monthlyServicingBps: 25 },
-        users: cfg.users || [],
-        sha: cfg.sha || currentSha
-      };
     }
 
-    // Sync userFeeWaivers from loaded platformConfig
+    // Sync userFeeWaivers from loaded users
     userFeeWaivers = {};
     platformConfig.users.forEach(u => {
       if (u.id && u.feeWaiver !== undefined) {
@@ -1411,7 +1421,6 @@ async function loadFromBackend() {
       }
     });
 
-    // Fill defaults for missing users
     USER_OPTIONS.forEach(opt => {
       if (!(opt.value in userFeeWaivers)) {
         userFeeWaivers[opt.value] = 'none';
@@ -1419,6 +1428,7 @@ async function loadFromBackend() {
     });
 
     renderTable();
+
   } catch (err) {
     console.error("Load error:", err);
   }
