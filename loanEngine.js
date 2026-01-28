@@ -63,6 +63,19 @@ export let USERS = {
 export let GLOBAL_FEE_CONFIG = null;
 
 
+export function setGlobalFeeConfig(fees) {
+  GLOBAL_FEE_CONFIG = fees;
+}
+
+export function setUsersFromPlatformConfig(usersArray) {
+  USERS = {};
+  usersArray.forEach(u => {
+    if (u?.id) {
+      USERS[u.id] = u;
+    }
+  });
+}
+
 export function getMonthlyServicingRate(feeConfig) {  
   return (Number(feeConfig.monthlyServicingBps || 0) / 10000);  
 }
