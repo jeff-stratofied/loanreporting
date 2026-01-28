@@ -4480,10 +4480,7 @@ if (loan.events?.length > 0) {
       </span>
     `;
   });
-}  // No "—" — empty cell to match amort when no events
-
-// ... rest of your tr.innerHTML stays the same, with <td>${eventsContent}</td>
-}
+}  
 
     tr.innerHTML = `
       <td>${loan.loanId ?? ""}</td>
