@@ -367,9 +367,23 @@ input:focus, select:focus {
 <!-- =========================================================
      TOP BUTTONS (ADD ROW + SAVE)
      ========================================================= -->
-<div style="margin: 16px 0; display: flex; gap: 10px;">
-  <button id="add-row">+ Add Loan</button>
-  <button id="save-btn">💾 Save Changes</button>
+<div style="margin: 16px 0; display: flex; justify-content: space-between; align-items: center; gap: 12px; flex-wrap: wrap;">
+  <!-- Left: Save area -->
+  <div style="display: flex; align-items: center; gap: 12px;">
+    <button id="save-btn">💾 Save Changes</button>
+    <span id="save-indicator" style="display:none; color: var(--green); font-size: 0.9rem; font-weight: 500;">Saved!</span>
+  </div>
+
+  <!-- Right: Action buttons -->
+  <div style="display: flex; align-items: center; gap: 10px;">
+    <button id="add-row">+ Add Loan</button>
+    <button id="fee-management-btn" style="background: #6366f1; border-color: #6366f1; color: white;">
+      Fee Management
+    </button>
+    <button disabled title="Coming soon" style="opacity: 0.6; cursor: not-allowed;">
+      User Management
+    </button>
+  </div>
 </div>
 
 <div
@@ -423,6 +437,10 @@ input:focus, select:focus {
   let currentLoans = [];
   let currentSha = null;
 
+// Fee waiver drawer state
+let feeDrawerOpen = false;
+let userFeeWaivers = {}; // will hold { "jeff": "none", "nick": "all", ... }
+  
   // ===========================
 // UNSAVED CHANGES TRACKING
 // ===========================
@@ -805,6 +823,105 @@ function openOwnershipDrawer(loan) {
   };
 }
 
+  // ────────────────────────────────────────────────
+// Fee Waiver Management Drawer
+// ────────────────────────────────────────────────
+function openFeeWaiverDrawer() {
+  const existing = document.getElementById("fee-waiver-drawer");
+  if (existing) existing.remove();
+
+  const drawer = document.createElement("div");
+  drawer.id = "fee-waiver-drawer";
+  drawer.style.cssText = `
+    position: fixed;
+    top: 0;
+    right: 0;
+    width: 380px;
+    height: 100%;
+    background: var(--card);
+    box-shadow: var(--shadow);
+    z-index: 1000;
+    overflow-y: auto;
+    color: var(--text);
+  `;
+
+  // Default to 'none' if not set yet
+  USER_OPTIONS.forEach(u => {
+    if (!(u.value in userFeeWaivers)) {
+      userFeeWaivers[u.value] = 'none';
+    }
+  });
+
+  const optionsHtml = `
+    None
+    All
+    Setup
+    Setup + Grace/Deferral
+    Grace/Deferral Only
+  `.trim().split('\n').map(line => line.trim()).filter(Boolean);
+
+  const radioGroups = USER_OPTIONS.map(user => {
+    const current = userFeeWaivers[user.value];
+    return `
+      <div style="margin-bottom: 24px; padding-bottom: 20px; border-bottom: 1px solid var(--border);">
+        <div style="font-weight: 600; margin-bottom: 12px;">
+          ${user.label} <span style="color:var(--muted); font-size:0.85rem;">(${user.value})</span>
+        </div>
+        <div style="display: flex; flex-direction: column; gap: 10px;">
+          ${optionsHtml.map((label, i) => {
+            const value = ['none','all','setup','setup_grace','grace_deferral'][i];
+            const id = `fee-${user.value}-${value}`;
+            return `
+              <label style="display:flex; align-items:center; gap:8px; cursor:pointer;">
+                <input type="radio" name="fee-${user.value}" value="${value}" 
+                  ${current === value ? 'checked' : ''} id="${id}">
+                ${label}
+              </label>
+            `;
+          }).join('')}
+        </div>
+      </div>
+    `;
+  }).join('');
+
+  drawer.innerHTML = `
+    <div style="padding: 20px;">
+      <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
+        <h3 style="margin:0; font-size:1.25rem;">Fee Waiver Management</h3>
+        <button id="close-fee-drawer" style="background:#374151; border:none; color:white; padding:6px 12px; border-radius:999px; cursor:pointer;">
+          Close
+        </button>
+      </div>
+
+      <div style="background:#1e293b; color:#cbd5e1; padding:12px 16px; border-radius:8px; margin-bottom:20px; font-size:0.9rem; line-height:1.4;">
+        User fee waivers apply to <strong>all loans</strong> owned by the user.<br>
+        Per-loan fee waivers (overrides) can be set directly in the loan table.<br>
+        <strong>Save changes</strong> on the main page to apply updates.
+      </div>
+
+      <div style="padding: 0 4px;">
+        ${radioGroups}
+      </div>
+    </div>
+  `;
+
+  document.body.appendChild(drawer);
+
+  // ─── Event listeners ──────────────────────────────────────
+  drawer.querySelectorAll('input[type="radio"]').forEach(radio => {
+    radio.addEventListener('change', () => {
+      const userId = radio.name.replace('fee-', '');
+      const value = radio.value;
+      userFeeWaivers[userId] = value;
+      markDirty();           // ← makes Save Changes button active
+    });
+  });
+
+  drawer.querySelector("#close-fee-drawer").onclick = () => {
+    drawer.remove();
+    feeDrawerOpen = false;
+  };
+}
 
 
 function normalizeLoan(l, idx) {
@@ -1233,6 +1350,11 @@ loanTable.addEventListener("change", (e) => {
   document.getElementById("loan-table").addEventListener("click", (e) => {
 const actionEl = e.target.closest("[data-action]");
 if (!actionEl) return;
+
+    // Fee Management button (outside the table)
+document.getElementById("fee-management-btn")?.addEventListener("click", () => {
+  openFeeWaiverDrawer();
+});
 
 const action = actionEl.dataset.action;
 const row = actionEl.closest("tr");
