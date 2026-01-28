@@ -1622,23 +1622,33 @@ async function saveToBackend() {
   }
 
   // =====================================================
-  // SAVE PLATFORM CONFIG — with FRESH SHA fetch first
+  // SAVE PLATFORM CONFIG — always attempt, with fresh SHA
   // =====================================================
   try {
-    // Always get latest SHA before saving config (fixes stale SHA / 409)
+    // Get the absolute latest SHA to avoid 409 conflicts
     const freshConfigRes = await fetch("https://loanreporting-api.jeff-263.workers.dev/platformConfig");
     let freshSha = null;
     if (freshConfigRes.ok) {
       const freshData = await freshConfigRes.json();
       freshSha = freshData.sha;
     } else {
-      console.warn("Could not fetch fresh config SHA, proceeding with known SHA");
+      console.warn("Fresh config SHA fetch failed, using known SHA");
+    }
+
+    // Always sync userFeeWaivers → platformConfig.users (defensive)
+    if (platformConfig && platformConfig.users) {
+      platformConfig.users = platformConfig.users.map(user => {
+        if (user.id in userFeeWaivers) {
+          return { ...user, feeWaiver: userFeeWaivers[user.id] };
+        }
+        return user;
+      });
     }
 
     const configBody = {
       fees: platformConfig.fees,
       users: platformConfig.users,
-      sha: freshSha || platformConfigSha  // prefer fresh, fallback to old
+      sha: freshSha || platformConfigSha
     };
 
     const configRes = await fetch("https://loanreporting-api.jeff-263.workers.dev/platformConfig", {
@@ -1649,20 +1659,23 @@ async function saveToBackend() {
 
     if (!configRes.ok) {
       const errData = await configRes.json();
-      throw new Error(`Config save failed: ${JSON.stringify(errData)}`);
-    }
-
-    const configData = await configRes.json();
-    if (configData.sha) {
-      platformConfigSha = configData.sha;
+      console.error("Config save failed:", errData);
+      status.textContent = "Config save failed (fees/waivers not saved)";
+      // Continue — don't block loan save
+    } else {
+      const configData = await configRes.json();
+      if (configData.sha) {
+        platformConfigSha = configData.sha;
+      }
+      // Optional: confirm success
+      console.log("Platform config saved successfully");
     }
   } catch (err) {
-    console.error("Platform config save failed:", err);
-    status.textContent = "Config save failed (fees/waivers may not have saved)";
-    // Do NOT return — allow loans to be considered saved
+    console.error("Platform config save error:", err);
+    status.textContent = "Config save error (fees/waivers may not be saved)";
   }
 
-  // Success
+  // Final success (loans saved, config attempted)
   status.textContent = "Saved ✔";
   clearDirty();
 }
