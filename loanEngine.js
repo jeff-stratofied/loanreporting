@@ -80,20 +80,16 @@ export function getMonthlyServicingRate(feeConfig) {
   return (Number(feeConfig.monthlyServicingBps || 0) / 10000);  
 }
 
-export function resolveFeeWaiverFlags(user, loan) {  
-  const waiver = (user?.feeWaiver || "none")
-  .toLowerCase()
-  .replace("_", "+");
-console.log("Fee waiver resolved:", user?.id, waiver);
-  
-  const loanWaiver = loan?.feeWaiver || "none";  // Loan override
+export function resolveFeeWaiverFlags(user, loan) {
+  const userWaiver = user?.feeWaiver || "none";
+  const loanWaiver = loan?.feeWaiver || "none";
 
-  // Helper to check waiver level
-  const effectiveWaiver = loanWaiver !== "none" ? loanWaiver : userWaiver;
+  const effectiveWaiver =
+    loanWaiver !== "none" ? loanWaiver : userWaiver;
 
   return {
     waiveSetup: ["setup", "grace", "all"].includes(effectiveWaiver),
-    waiveMonthly: ["grace", "all"].includes(effectiveWaiver),  // "grace" waives during grace/deferral
+    waiveMonthly: ["grace", "all"].includes(effectiveWaiver),
     waiveAll: effectiveWaiver === "all"
   };
 }
