@@ -1109,9 +1109,9 @@ function openFeeWaiverDrawer() {
     setTimeout(() => drawer.remove(), 300);
   };
 
-  // Save (now at top)
+// Save (now at top)
 drawer.querySelector("#drawer-save-btn").onclick = async () => {
-  // Apply fees & sync waivers (your existing code)
+  // Apply fees & sync waivers
   const newSetup = parseInt(drawer.querySelector('#global-setup-fee').value, 10);
   const newBps   = parseInt(drawer.querySelector('#global-monthly-bps').value, 10);
   if (!isNaN(newSetup)) platformConfig.fees.setupFee = newSetup;
@@ -1122,7 +1122,7 @@ drawer.querySelector("#drawer-save-btn").onclick = async () => {
   });
 
   try {
-    // Fetch fresh SHA before save
+    // Fetch fresh SHA before save (good — you're already doing this)
     const freshRes = await fetch("https://loanreporting-api.jeff-263.workers.dev/platformConfig");
     let freshSha = null;
     if (freshRes.ok) {
@@ -1151,16 +1151,28 @@ drawer.querySelector("#drawer-save-btn").onclick = async () => {
     const saved = await saveRes.json();
     if (saved.sha) platformConfigSha = saved.sha;
 
-    markDirty();  // optional – since we just saved
+    // ────────────────────────────────────────────────
+    // FIXED PART ── this is what was missing
+    // ────────────────────────────────────────────────
+    clearDirty();   // ← Clears the unsaved warning banner + main save button highlight
+
     const status = document.getElementById("status");
-    if (status) status.textContent = "Fees & waivers saved!";
+    if (status) {
+      status.textContent = "Fees & waivers saved!";
+      // Optional: auto-reset status after ~4 seconds for cleaner UI
+      setTimeout(() => {
+        if (status.textContent === "Fees & waivers saved!") {
+          status.textContent = "Idle";
+        }
+      }, 4000);
+    }
 
   } catch (err) {
     console.error(err);
     alert("Network error during save");
   }
 
-  // Close drawer
+  // Close drawer (this stays exactly the same)
   drawer.style.transform = "translateX(100%)";
   setTimeout(() => drawer.remove(), 300);
 };
