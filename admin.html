@@ -437,6 +437,7 @@ input:focus, select:focus {
   let currentLoans = [];
   let platformConfig = null;
   let currentSha = null;
+  let platformConfigSha = null;
   
 // Fee waiver drawer state
 let feeDrawerOpen = false;
@@ -1373,7 +1374,7 @@ obj.ownershipLots = Array.isArray(existing?.ownershipLots)
 
 async function loadFromBackend() {
   try {
-    // 1. Load loans from /loans
+    // 1️⃣ Load loans from /loans
     const loansRes = await fetch("https://loanreporting-api.jeff-263.workers.dev/loans");
     if (!loansRes.ok) throw new Error("Loans fetch failed");
     const loansData = await loansRes.json();
@@ -1381,39 +1382,46 @@ async function loadFromBackend() {
     currentLoans = loansData.loans || [];
     currentSha = loansData.sha || null;
 
-    // 2. Load platform config from /platformConfig (this is the missing piece!)
+    // 2️⃣ Load platform config from /platformConfig
+    let configData = null;
+
     const configRes = await fetch("https://loanreporting-api.jeff-263.workers.dev/platformConfig");
-    let configData;
-    if (!configRes.ok) {
+    if (configRes.ok) {
+      configData = await configRes.json();
+    } else {
       console.warn("platformConfig endpoint failed, trying direct file...");
-      const directRes = await fetch("https://loanreporting-api.jeff-263.workers.dev/data/platformConfig.json");
+      const directRes = await fetch(
+        "https://raw.githubusercontent.com/jeff-stratofied/loanreporting/main/data/platformConfig.json"
+      );
       if (directRes.ok) {
         configData = await directRes.json();
       }
-    } else {
-      configData = await configRes.json();
     }
 
+    // 3️⃣ Normalize + STORE SHA SEPARATELY
     if (configData) {
       platformConfig = {
         fees: configData.fees || { setupFee: 150, monthlyServicingBps: 25 },
-        users: configData.users || [],
-        sha: configData.sha || currentSha
+        users: configData.users || []
       };
+
+      platformConfigSha = configData.sha || null; // ✅ IMPORTANT
     } else {
       console.warn("No platformConfig loaded — using fallback");
+
       platformConfig = {
         fees: { setupFee: 150, monthlyServicingBps: 25 },
         users: [
           { id: "jeff", name: "Jeff", role: "lender", feeWaiver: "none", active: true },
           { id: "nick", name: "Nick", role: "lender", feeWaiver: "all", active: true },
           { id: "john", name: "John", role: "investor", feeWaiver: "none", active: true }
-        ],
-        sha: currentSha
+        ]
       };
+
+      platformConfigSha = null; // fallback has no SHA
     }
 
-    // Sync userFeeWaivers from loaded users
+    // 4️⃣ Sync userFeeWaivers from loaded users
     userFeeWaivers = {};
     platformConfig.users.forEach(u => {
       if (u.id && u.feeWaiver !== undefined) {
@@ -1423,7 +1431,7 @@ async function loadFromBackend() {
 
     USER_OPTIONS.forEach(opt => {
       if (!(opt.value in userFeeWaivers)) {
-        userFeeWaivers[opt.value] = 'none';
+        userFeeWaivers[opt.value] = "none";
       }
     });
 
@@ -1536,30 +1544,35 @@ async function saveToBackend() {
     return;
   }
 
-  // =====================================================
-  // SAVE PLATFORM CONFIG (new - only if changed)
-  // =====================================================
-  if (configUpdated) {
-    try {
-      const configRes = await fetch("https://loanreporting-api.jeff-263.workers.dev/platformConfig", {
-        method: "POST",
-        headers: {"Content-Type": "application/json"},
-        body: JSON.stringify({
-          fees: platformConfig.fees,
-          users: platformConfig.users,
-          sha: currentSha  // optional, backend can ignore if not needed
-        })
-      });
-      const configData = await configRes.json();
-      if (!configRes.ok) throw configData;
-      // Update local sha if backend returns new one
-      if (configData.sha) currentSha = configData.sha;
-    } catch (err) {
-      console.error("Config save failed:", err);
-      status.textContent = "Config save failed (waivers may not persist)";
-      return;
+// =====================================================
+// SAVE PLATFORM CONFIG (only if changed)
+// =====================================================
+if (configUpdated) {
+  try {
+    const configRes = await fetch("https://loanreporting-api.jeff-263.workers.dev/platformConfig", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        fees: platformConfig.fees,
+        users: platformConfig.users,
+        sha: platformConfigSha   // ✅ CORRECT SHA
+      })
+    });
+
+    const configData = await configRes.json();
+    if (!configRes.ok) throw configData;
+
+    // ✅ UPDATE platformConfig SHA AFTER SAVE
+    if (configData.sha) {
+      platformConfigSha = configData.sha;
     }
+
+  } catch (err) {
+    console.error("Config save failed:", err);
+    status.textContent = "Config save failed (waivers may not persist)";
+    return;
   }
+}
 
   // Success
   status.textContent = "Saved ✔";
