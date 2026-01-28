@@ -403,20 +403,24 @@ input:focus, select:focus {
      TABLE
      ========================================================= -->
 <table id="loan-table">
-  <thead>
-    <tr>
-      <th data-field="loanId" class="sortable">ID</th>
-      <th data-field="loanName" class="sortable">Loan Name</th>
-      <th>Ownership</th>
-      <th data-field="school" class="sortable">School</th>
-      <th data-field="loanStartDate" class="sortable">Loan Start Date</th>
-      <th data-field="principal" class="sortable col-money">Orig Loan Amt</th>
-      <th data-field="rate" class="sortable col-rate">Rate</th>
-      <th data-field="termYears" class="sortable col-years">Term (yrs)</th>
-      <th data-field="graceYears" class="sortable col-years">Grace (yrs)</th>
-      <th class="col-actions">Actions</th>
-    </tr>
-  </thead>
+<thead>
+  <tr>
+    <th data-field="loanId" class="sortable">ID</th>
+    <th data-field="loanName" class="sortable">Loan Name</th>
+    <th>Ownership</th>
+    <th data-field="school" class="sortable">School</th>
+    <th data-field="loanStartDate" class="sortable">Loan Start Date</th>
+    <th data-field="principal" class="sortable col-money">Orig Loan Amt</th>
+    <th data-field="rate" class="sortable col-rate">Rate</th>
+    <th data-field="termYears" class="sortable col-years">Term (yrs)</th>
+    <th data-field="graceYears" class="sortable col-years">Grace (yrs)</th>
+    <th>Waive Fees</th>  
+    <th data-field="purchaseDate" class="sortable cell-date">Purchase Date</th>
+    <th data-field="purchasePrice" class="sortable col-money">Buy Price</th>
+    <th>Events</th>
+    <th class="col-actions">Actions</th>
+  </tr>
+</thead>
   <tbody id="loan-table-body"></tbody>
 </table>
 
@@ -1356,6 +1360,21 @@ function renderTable() {
       <td class="col-years">
         <input type="number" step="0.1" value="${loan.graceYears}" data-field="graceYears">
       </td>
+      <td class="col-years">
+  <input type="number" data-field="graceYears" value="${loan.graceYears || ''}" step="0.25">
+</td>
+<td>  
+  <select data-field="feeWaiver">
+    <option value="none" ${loan.feeWaiver === "none" ? "selected" : ""}>None</option>
+    <option value="setup" ${loan.feeWaiver === "setup" ? "selected" : ""}>Setup Only</option>
+    <option value="grace" ${loan.feeWaiver === "grace" ? "selected" : ""}>Setup & Servicing</option>
+    <option value="all" ${loan.feeWaiver === "all" ? "selected" : ""}>All</option>
+  </select>
+</td>
+<!-- Existing cells continue... -->
+<td class="cell-date">
+  <input type="date" data-field="purchaseDate" value="${escapeHtml(loan.purchaseDate || '')}">
+</td>
 
       <td class="col-actions">
         <button
@@ -1382,50 +1401,64 @@ function renderTable() {
 function collectLoans() {
   const rows = document.querySelectorAll("#loan-table-body tr");
   const list = [];
-
+  
   rows.forEach(row => {
     const obj = {};
     const inputs = row.querySelectorAll("[data-field]");
-
+    
     const ALLOWED_FIELDS = new Set([
-  "loanName",
-  "school",
-  "loanStartDate",
-  "principal",
-  "rate",
-  "termYears",
-  "graceYears"
-]);
+      "loanName",
+      "school",
+      "loanStartDate",
+      "principal",
+      "rate",
+      "termYears",
+      "graceYears",
+      "feeWaiver"          // ← Added here
+    ]);
 
-inputs.forEach(inp => {
-  const k = inp.dataset.field;
-  if (!ALLOWED_FIELDS.has(k)) return;
+    inputs.forEach(inp => {
+      const k = inp.dataset.field;
+      if (!ALLOWED_FIELDS.has(k)) return;
+      
+      let v = inp.value.trim();  // Use trim() to clean up any accidental whitespace
+      
+      // Handle type conversion based on field
+      if (k === "rate") {
+        v = Number(v) / 100;          // convert % back to decimal (e.g. 5.25 → 0.0525)
+      } else if (["principal", "termYears", "graceYears"].includes(k)) {
+        v = Number(v);                // numeric fields
+        if (isNaN(v)) v = null;       // protect against invalid input
+      } else if (k === "feeWaiver") {
+        // feeWaiver is a string: "none", "setup", "grace", "all"
+        // We accept whatever the <select> gives us (already validated by options)
+        // but we can enforce fallback to "none" if somehow invalid
+        if (!["none", "setup", "grace", "all"].includes(v)) {
+          v = "none";
+        }
+      }
+      
+      obj[k] = v;
+    });
 
-  let v = inp.value;  // Add this line to fix the error
-
-  if (k === "rate") {
-    v = Number(v) / 100; // convert % back to decimal
-  } else if (["principal","termYears","graceYears"].includes(k)) {
-    v = Number(v);
-  }
-
-  obj[k] = v;
-});
-
-
+    // Set loanId from row data attribute
     const loanId = row.dataset.loanId;
     obj.loanId = loanId;
 
-    // ✅ PRESERVE EVENTS FROM CURRENT STATE
+    // Preserve important preserved arrays/objects from current state
     const existing = currentLoans.find(l => String(l.loanId) === String(loanId));
-    obj.events = Array.isArray(existing?.events) ? existing.events : [];
-
-// 🔑 PRESERVE OWNERSHIP LOTS (CANONICAL)
-obj.ownershipLots = Array.isArray(existing?.ownershipLots)
-  ? structuredClone(existing.ownershipLots)
-  : [];
-
     
+    // Events (unchanged)
+    obj.events = Array.isArray(existing?.events) ? existing.events : [];
+    
+    // Ownership lots (unchanged – canonical source)
+    obj.ownershipLots = Array.isArray(existing?.ownershipLots)
+      ? structuredClone(existing.ownershipLots)
+      : [];
+
+    // Optional: you could add a safety check here if desired
+    // if (!obj.feeWaiver) obj.feeWaiver = "none";
+
     list.push(obj);
   });
 
@@ -1448,6 +1481,10 @@ async function loadFromBackend() {
     const loansData = await loansRes.json();
     currentLoans = loansData.loans || [];
     currentSha = loansData.sha || null;
+
+    currentLoans.forEach(l => {
+  if (!l.feeWaiver) l.feeWaiver = "none";
+});
 
     // 2️⃣ Load platform config — try API first, fallback to raw GitHub
     let configData = null;
