@@ -1121,6 +1121,8 @@ drawer.querySelector("#drawer-save-btn").onclick = async () => {
     if (u.id in userFeeWaivers) u.feeWaiver = userFeeWaivers[u.id];
   });
 
+  markDirty(); // ensure main Save knows state changed
+
   try {
     // Fetch fresh SHA before save (good — you're already doing this)
     const freshRes = await fetch("https://loanreporting-api.jeff-263.workers.dev/platformConfig");
@@ -1500,6 +1502,7 @@ async function loadFromBackend() {
       }
     });
 
+    
     // Ensure every known user option has at least "none" (defensive)
     USER_OPTIONS.forEach(opt => {
       if (!(opt.value in userFeeWaivers)) {
@@ -1680,6 +1683,10 @@ async function saveToBackend() {
   clearDirty();
 }
 
+document.getElementById("save-btn")?.addEventListener("click", () => {
+  saveToBackend();
+});
+  
   // =====================================================
 // GLOBAL DIRTY TRACKING FOR TABLE EDITS
 // =====================================================
