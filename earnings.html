@@ -1388,7 +1388,9 @@ import {
   loadLoans, 
     attachSchedules, 
     buildPortfolioViews,
-  isDeferredMonth
+  isDeferredMonth,
+    setGlobalFeeConfig,
+setUsersFromPlatformConfig
 } from "./loanEngine.js?v=dev";
 
   import {
@@ -4658,24 +4660,29 @@ function updateSortSelectFromTable(key, dir) {
 
 async function initPage() {
   try {
-    // Load platform config first (fees + users + waivers)
-    await loadPlatformConfig("https://jeff-stratofied.github.io/loanreporting/data/platformConfig.json");
-    
-    // Log AFTER loading (to avoid ReferenceError if not yet set)
-    console.log("Platform config loaded successfully:", {
-      setupFee: GLOBAL_FEE_CONFIG?.setupFee,
-      monthlyBps: GLOBAL_FEE_CONFIG?.monthlyServicingBps,
-      userCount: Object.keys(USERS || {}).length
-    });
-  } catch (err) {
-    console.error("Failed to load platform config:", err);
-  }
+// Load platform config first (fees + users + waivers)
+await loadPlatformConfig(
+"https://jeff-stratofied.github.io/loanreporting/data/platformConfig.json"
+);
+
+// ✅ Apply platform config to loanEngine globals
+if (platformConfig?.fees) {
+setGlobalFeeConfig(platformConfig.fees);
+}
+
+if (Array.isArray(platformConfig?.users)) {
+setUsersFromPlatformConfig(platformConfig.users);
+}
   
   await loadLoansFromBackend();                     // ← now normalized + scheduled
 
   // Rebuild earnings-specific derived data (should now work better)
   rebuildLoansWithEarnings();
 
+} catch (err) {
+console.error("Earnings init failed:", err);
+}
+    
   PORTFOLIO_START = getPortfolioStartDate(loansWithEarnings);
 
   // ── Defensive fallback for any lingering "MISSING" ──────────────────
