@@ -8,7 +8,7 @@
       "id": "jeff",
       "name": "Jeff",
       "role": "lender",
-      "feeWaiver": "setup",
+      "feeWaiver": "setup_grace",
       "active": true
     },
     {
@@ -26,5 +26,5 @@
       "active": true
     }
   ],
-  "sha": "f7d58662771c90cd92378a3777fe3ee18df3fedc"
+  "sha": "8ae09cc367d4be0305d59fa934787377278f2bdb"
 }
