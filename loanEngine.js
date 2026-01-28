@@ -63,11 +63,11 @@ export let USERS = {
 export let GLOBAL_FEE_CONFIG = null;
 
 
-function getMonthlyServicingRate(feeConfig) {
-  return (Number(feeConfig.monthlyServicingBps || 0) / 10000);
+export function getMonthlyServicingRate(feeConfig) {  
+  return (Number(feeConfig.monthlyServicingBps || 0) / 10000);  
 }
 
-function resolveFeeWaiverFlags(user, loan) {
+export function resolveFeeWaiverFlags(user, loan) {  
   const userWaiver = user?.feeWaiver || "none";
   const loanWaiver = loan?.feeWaiver || "none";  // Loan override
 
