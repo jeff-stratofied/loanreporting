@@ -502,205 +502,317 @@ function openEventsDrawer(loan) {
   const drawer = document.createElement("div");
   drawer.id = "events-drawer";
   drawer.style.cssText = `
-  position: fixed;
-  top: 0;
-  right: 0;
-  width: 480px;                  /* wider for better readability */
-  height: 100%;
-  background: var(--card);
-  box-shadow: -4px 0 20px rgba(0,0,0,0.3);
-  z-index: 1000;
-  overflow-y: auto;
-  color: var(--text);
-  font-family: system-ui, sans-serif;
-`;
-  
+    position: fixed;
+    top: 0;
+    right: 0;
+    width: 480px;
+    height: 100%;
+    background: var(--card);
+    box-shadow: -4px 0 20px rgba(0,0,0,0.25);
+    z-index: 1000;
+    overflow-y: auto;
+    color: var(--text);
+  `;
+
+  // Gather existing events
+  const prepayments = loan.events?.filter(e => e.type === 'prepayment') || [];
+  const deferrals    = loan.events?.filter(e => e.type === 'deferral')    || [];
+  const defaults     = loan.events?.filter(e => e.type === 'default')     || [];
+
   drawer.innerHTML = `
-  <h3 style="margin-top:0">Events — ${loan.loanName}</h3>
+    <div style="padding: 24px;">
+      <!-- Header -->
+      <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 24px;">
+        <h3 style="margin:0; font-size:1.35rem; font-weight:600;">
+          Events — ${loan.loanName || 'Loan'} ${loan.loanId || ''}
+        </h3>
+        <button id="close-events-drawer" style="
+          background: var(--delete-bg);
+          border: 1px solid var(--border);
+          color: var(--text);
+          padding: 8px 16px;
+          border-radius: 999px;
+          cursor: pointer;
+          font-size: 0.95rem;
+          font-weight: 500;
+        ">
+          Close
+        </button>
+      </div>
 
-  <div style="margin-bottom:12px;color:var(--muted);font-size:0.8rem">
-    Loan lifecycle events (Prepayments, Deferrals & Default)
-  </div>
+      <!-- Info box -->
+      <div style="
+        background: color-mix(in srgb, var(--card) 85%, var(--muted) 15%);
+        color: var(--muted);
+        padding: 16px 20px;
+        border-radius: 12px;
+        margin-bottom: 32px;
+        font-size: 0.94rem;
+        line-height: 1.55;
+        border: 1px solid var(--border);
+      ">
+        Loan lifecycle events (Prepayments, Deferrals & Default)<br>
+        These affect amortization, earnings, and ROI calculations.<br><br>
+        <strong>Adding or deleting events here updates the loan immediately</strong> — save the main page to persist.
+      </div>
 
-  <div id="event-list" style="margin-bottom:16px">
-    ${
-      loan.events.length === 0
-        ? `<div style="color:var(--muted)">No events yet</div>`
-        : loan.events.map(e => `
+      <!-- Prepayments Section -->
+      <div style="margin-bottom: 32px;">
+        <h4 style="margin: 0 0 16px; font-size: 1.1rem; font-weight: 600;">Prepayments</h4>
+        ${prepayments.length === 0 
+          ? '<p style="color: var(--muted);">No prepayments yet</p>' 
+          : prepayments.map(e => `
             <div style="
-              display:flex;
-              align-items:center;
-              justify-content:space-between;
-              margin-bottom:6px;
-              font-size:12px;
+              display: flex;
+              justify-content: space-between;
+              align-items: center;
+              padding: 12px;
+              background: color-mix(in srgb, var(--card) 90%, var(--border) 10%);
+              border-radius: 8px;
+              margin-bottom: 12px;
+              font-size: 0.95rem;
             ">
               <div>
-                ${
-                  e.type === "prepayment"
-                    ? `💰 Prepay — ${e.date} — $${Number(e.amount).toLocaleString()}`
-                  : e.type === "deferral"
-                    ? `⏸ Deferral — ${e.startDate} — ${e.months} mo`
-                  : `⚠️ Default — ${e.date} — Recovery $${Number(e.recoveryAmount).toLocaleString()}`
-                }
+                ${e.date} — $${Number(e.amount).toLocaleString()}
               </div>
-              <button data-event-id="${e.id}" style="font-size:11px;padding:2px 6px">
-                Delete
-              </button>
+              <button data-event-id="${e.id}" style="
+                background: var(--delete-bg);
+                border: 1px solid var(--border);
+                color: var(--text);
+                padding: 4px 10px;
+                border-radius: 999px;
+                font-size: 0.85rem;
+                cursor: pointer;
+              ">Delete</button>
             </div>
-          `).join("")
-    }
-  </div>
+          `).join('')}
 
-  <hr style="border-color:var(--border);margin:12px 0">
+        <!-- Add Prepayment -->
+        <div style="margin-top: 20px;">
+          <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-bottom: 12px;">
+            <div>
+              <label style="display: block; margin-bottom: 6px; color: var(--muted);">Date</label>
+              <input type="date" id="prepay-date" style="width:100%;" />
+            </div>
+            <div>
+              <label style="display: block; margin-bottom: 6px; color: var(--muted);">Amount</label>
+              <input type="number" id="prepay-amount" placeholder="0.00" min="0" step="0.01" style="width:100%;" />
+            </div>
+          </div>
+          <button id="add-prepay-btn" style="
+            background: var(--green);
+            border: none;
+            color: white;
+            padding: 10px 20px;
+            border-radius: 999px;
+            cursor: pointer;
+            font-weight: 500;
+          ">Add Prepayment</button>
+        </div>
+      </div>
 
-  <h4>Add Prepayment</h4>
-  <input type="date" id="evt-date" style="margin-bottom:6px;width:100%">
-  <input type="number" id="evt-amount" placeholder="Amount" style="margin-bottom:8px;width:100%">
-  <button id="add-prepay-btn">Add Prepayment</button>
+      <!-- Deferrals Section -->
+      <div style="margin-bottom: 32px;">
+        <h4 style="margin: 0 0 16px; font-size: 1.1rem; font-weight: 600;">Deferrals</h4>
+        ${deferrals.length === 0 
+          ? '<p style="color: var(--muted);">No deferrals yet</p>' 
+          : deferrals.map(e => `
+            <div style="
+              display: flex;
+              justify-content: space-between;
+              align-items: center;
+              padding: 12px;
+              background: color-mix(in srgb, var(--card) 90%, var(--border) 10%);
+              border-radius: 8px;
+              margin-bottom: 12px;
+              font-size: 0.95rem;
+            ">
+              <div>
+                ${e.startDate} — ${e.months} months
+              </div>
+              <button data-event-id="${e.id}" style="
+                background: var(--delete-bg);
+                border: 1px solid var(--border);
+                color: var(--text);
+                padding: 4px 10px;
+                border-radius: 999px;
+                font-size: 0.85rem;
+                cursor: pointer;
+              ">Delete</button>
+            </div>
+          `).join('')}
 
-  <hr style="border-color:var(--border);margin:14px 0">
+        <!-- Add Deferral -->
+        <div style="margin-top: 20px;">
+          <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-bottom: 12px;">
+            <div>
+              <label style="display: block; margin-bottom: 6px; color: var(--muted);">Start Date</label>
+              <input type="date" id="defer-start" style="width:100%;" />
+            </div>
+            <div>
+              <label style="display: block; margin-bottom: 6px; color: var(--muted);">Months</label>
+              <input type="number" id="defer-months" min="1" placeholder="1–36" style="width:100%;" />
+            </div>
+          </div>
+          <button id="add-deferral-btn" style="
+            background: var(--green);
+            border: none;
+            color: white;
+            padding: 10px 20px;
+            border-radius: 999px;
+            cursor: pointer;
+            font-weight: 500;
+          ">Add Deferral</button>
+        </div>
+      </div>
 
-  <h4>Add Deferral</h4>
-  <input type="date" id="def-start" style="margin-bottom:6px;width:100%">
-  <input type="number" id="def-months" placeholder="Months" min="1" style="margin-bottom:8px;width:100%">
-  <button id="add-deferral-btn">Add Deferral</button>
+      <!-- Default Section -->
+      <div>
+        <h4 style="margin: 0 0 16px; font-size: 1.1rem; font-weight: 600;">Default</h4>
+        ${defaults.length === 0 
+          ? '<p style="color: var(--muted);">No default event yet</p>' 
+          : defaults.map(e => `
+            <div style="
+              display: flex;
+              justify-content: space-between;
+              align-items: center;
+              padding: 12px;
+              background: color-mix(in srgb, var(--card) 90%, var(--border) 10%);
+              border-radius: 8px;
+              font-size: 0.95rem;
+            ">
+              <div>
+                ${e.date} — Recovery $${Number(e.recoveryAmount).toLocaleString()}
+              </div>
+              <button data-event-id="${e.id}" style="
+                background: var(--delete-bg);
+                border: 1px solid var(--border);
+                color: var(--text);
+                padding: 4px 10px;
+                border-radius: 999px;
+                font-size: 0.85rem;
+                cursor: pointer;
+              ">Delete</button>
+            </div>
+          `).join('')}
 
-  <hr style="border-color:var(--border);margin:14px 0">
-
-  <h4 style="color:#f87171">Add Default</h4>
-  <input type="date" id="def-date" style="margin-bottom:6px;width:100%">
-  <input
-    type="number"
-    id="def-recovery"
-    placeholder="Collections Recovery ($0 allowed)"
-    min="0"
-    step="0.01"
-    style="margin-bottom:8px;width:100%"
-  >
-  <button id="add-default-btn" style="background:#7f1d1d;border-color:#7f1d1d;color:white">
-    Add Default
-  </button>
-
-  <button id="close-event-btn">Close</button>
-`;
+        ${defaults.length === 0 ? `
+          <div style="margin-top: 20px;">
+            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-bottom: 12px;">
+              <div>
+                <label style="display: block; margin-bottom: 6px; color: var(--muted);">Date</label>
+                <input type="date" id="default-date" style="width:100%;" />
+              </div>
+              <div>
+                <label style="display: block; margin-bottom: 6px; color: var(--muted);">Recovery Amount</label>
+                <input type="number" id="default-recovery" placeholder="0.00" min="0" step="0.01" style="width:100%;" />
+              </div>
+            </div>
+            <button id="add-default-btn" style="
+              background: #ef4444;
+              border: none;
+              color: white;
+              padding: 10px 20px;
+              border-radius: 999px;
+              cursor: pointer;
+              font-weight: 500;
+            ">Add Default</button>
+          </div>
+        ` : '<p style="color: var(--muted); font-style: italic;">Only one default event allowed per loan.</p>' }
+      </div>
+    </div>
+  `;
 
   document.body.appendChild(drawer);
 
-  // -------------------------------
-  // Delete event
-  // -------------------------------
-  drawer.querySelectorAll("button[data-event-id]").forEach(btn => {
-    btn.onclick = () => {
-      if (!confirm("Delete this event?")) return;
+  // ─── Event listeners ──────────────────────────────────────
 
-      const id = btn.dataset.eventId;
-      loan.events = loan.events.filter(e => e.id !== id);
-      markDirty();
-
-      drawer.remove();
-      openEventsDrawer(loan);
-      renderTable(); // ✅ UPDATE TABLE
-    };
-  });
-
-  drawer.querySelector("#close-event-btn").onclick = () => {
+  // Close
+  drawer.querySelector("#close-events-drawer").onclick = () => {
     drawer.remove();
   };
 
-  // -------------------------------
-  // Add prepayment
-  // -------------------------------
-  drawer.querySelector("#add-prepay-btn").onclick = () => {
-    const date = drawer.querySelector("#evt-date").value;
-    const amount = Number(drawer.querySelector("#evt-amount").value);
+  // Delete any event
+  drawer.querySelectorAll("button[data-event-id]").forEach(btn => {
+    btn.onclick = () => {
+      if (!confirm("Delete this event?")) return;
+      const id = btn.dataset.eventId;
+      loan.events = loan.events.filter(e => e.id !== id);
+      markDirty();
+      drawer.remove();
+      openEventsDrawer(loan);
+      renderTable();
+    };
+  });
 
-    if (!date || !amount || amount <= 0) {
-      alert("Enter a valid date and amount");
+  // Add prepayment
+  drawer.querySelector("#add-prepay-btn")?.onclick = () => {
+    const date = drawer.querySelector("#prepay-date").value;
+    const amount = Number(drawer.querySelector("#prepay-amount").value);
+    if (!date || amount <= 0 || isNaN(amount)) {
+      alert("Enter a valid date and amount > 0");
       return;
     }
-
+    loan.events = loan.events || [];
     loan.events.push({
       id: crypto.randomUUID(),
       type: "prepayment",
       date,
       amount
     });
-
-    loan.events.sort((a, b) => new Date(a.date) - new Date(b.date));
+    loan.events.sort((a, b) => new Date(a.date || a.startDate) - new Date(b.date || b.startDate));
     markDirty();
-
     drawer.remove();
     openEventsDrawer(loan);
-    renderTable(); // ✅ UPDATE TABLE
+    renderTable();
   };
 
-  // -------------------------------
   // Add deferral
-  // -------------------------------
-  drawer.querySelector("#add-deferral-btn").onclick = () => {
-    const startDate = drawer.querySelector("#def-start").value;
-    const months = Number(drawer.querySelector("#def-months").value);
-
-    if (!startDate || !months || months <= 0) {
-      alert("Enter a valid start date and number of months");
+  drawer.querySelector("#add-deferral-btn")?.onclick = () => {
+    const startDate = drawer.querySelector("#defer-start").value;
+    const months = Number(drawer.querySelector("#defer-months").value);
+    if (!startDate || months <= 0 || isNaN(months)) {
+      alert("Enter a valid start date and months ≥ 1");
       return;
     }
-
+    loan.events = loan.events || [];
     loan.events.push({
       id: crypto.randomUUID(),
       type: "deferral",
       startDate,
       months
     });
-
-    loan.events.sort((a, b) => {
-      const da = new Date(a.startDate || a.date);
-      const db = new Date(b.startDate || b.date);
-      return da - db;
-    });
-
+    loan.events.sort((a, b) => new Date(a.date || a.startDate) - new Date(b.date || b.startDate));
     markDirty();
-
     drawer.remove();
     openEventsDrawer(loan);
-    renderTable(); // ✅ UPDATE TABLE
+    renderTable();
   };
 
-  // -------------------------------
   // Add default
-  // -------------------------------
-  drawer.querySelector("#add-default-btn").onclick = () => {
-    const date = drawer.querySelector("#def-date").value;
-    const recoveryAmount = Number(drawer.querySelector("#def-recovery").value);
-
-    if (!date || recoveryAmount < 0 || Number.isNaN(recoveryAmount)) {
-      alert("Enter a valid default date and recovery amount (≥ $0)");
+  drawer.querySelector("#add-default-btn")?.onclick = () => {
+    const date = drawer.querySelector("#default-date").value;
+    const recoveryAmount = Number(drawer.querySelector("#default-recovery").value);
+    if (!date || recoveryAmount < 0 || isNaN(recoveryAmount)) {
+      alert("Enter a valid date and recovery amount ≥ 0");
       return;
     }
-
     if (loan.events.some(e => e.type === "default")) {
       alert("This loan already has a Default event.");
       return;
     }
-
+    loan.events = loan.events || [];
     loan.events.push({
       id: crypto.randomUUID(),
       type: "default",
       date,
       recoveryAmount
     });
-
-    loan.events.sort((a, b) => {
-      const da = new Date(a.startDate || a.date);
-      const db = new Date(b.startDate || b.date);
-      return da - db;
-    });
-
+    loan.events.sort((a, b) => new Date(a.date || a.startDate) - new Date(b.date || b.startDate));
     markDirty();
-
     drawer.remove();
     openEventsDrawer(loan);
-    renderTable(); // ✅ UPDATE TABLE
+    renderTable();
   };
 }
 
