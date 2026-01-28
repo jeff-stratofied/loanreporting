@@ -81,7 +81,11 @@ export function getMonthlyServicingRate(feeConfig) {
 }
 
 export function resolveFeeWaiverFlags(user, loan) {  
-  const userWaiver = user?.feeWaiver || "none";
+  const waiver = (user?.feeWaiver || "none")
+  .toLowerCase()
+  .replace("_", "+");
+console.log("Fee waiver resolved:", user?.id, waiver);
+  
   const loanWaiver = loan?.feeWaiver || "none";  // Loan override
 
   // Helper to check waiver level
