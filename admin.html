@@ -1369,9 +1369,6 @@ function renderTable() {
       <td class="col-years">
         <input type="number" step="0.1" value="${loan.graceYears}" data-field="graceYears">
       </td>
-      <td class="col-years">
-  <input type="number" data-field="graceYears" value="${loan.graceYears || ''}" step="0.25">
-</td>
 <td>  
   <select data-field="feeWaiver">
     <option value="none" ${loan.feeWaiver === "none" ? "selected" : ""}>None</option>
