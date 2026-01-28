@@ -340,50 +340,48 @@
 
 
 /* =========================================
-   Loan event badges — MATCH AMORT: circle icon only + tooltip
+   Loan event badges (match Amort layout/icons/classes)
    ========================================= */
 .loan-badges {
   display: flex;
   gap: 6px;
-  margin-top: 4px;
+  margin-top: 4px;  /* Tight spacing for position between name and school */
   flex-wrap: wrap;
 }
 
 .loan-badge {
   display: inline-flex;
   align-items: center;
-  justify-content: center;
-  width: 24px;               /* Slightly larger circle than amort for visibility */
-  height: 24px;
-  border-radius: 50%;        /* Full circle */
-  font-size: 14px;           /* Bigger emoji/symbol */
-  font-weight: normal;
-  line-height: 1;
-  cursor: pointer;
-  border: none;              /* Remove border for clean amort look */
-  box-shadow: 0 1px 3px rgba(0,0,0,0.1);  /* Subtle shadow like amort */
-  transition: transform 0.1s ease;
+  gap: 4px;
+  padding: 2px 6px;
+  font-size: 11px;
+  font-weight: 600;
+  border-radius: 999px;
+  border: 1px solid var(--border);
+  background: var(--surface);
+  color: var(--text);
+  cursor: pointer;  
 }
 
-.loan-badge:hover {
-  transform: scale(1.15);    /* Slight zoom on hover — nice touch */
-}
-
-/* Colored backgrounds — keep your earnings colors */
 .loan-badge.prepayment {
-  background: rgba(34, 197, 94, 0.9);   /* Stronger green opacity for circle */
-  color: white;
+  background: rgba(34, 197, 94, 0.18);
+  color: #166534;
+  border-color: rgba(34, 197, 94, 0.35);
 }
 
 .loan-badge.deferral {
-  background: rgba(234, 179, 8, 0.9);   /* Stronger yellow/orange */
-  color: white;
+  background: rgba(234, 179, 8, 0.18);
+  color: #92400e;
+  border-color: rgba(234, 179, 8, 0.35);
 }
 
 .loan-badge.default {
-  background: rgba(239, 68, 68, 0.9);   /* Stronger red */
-  color: white;
+  background: rgba(239, 68, 68, 0.15);
+  color: #b91c1c;
+  border-color: rgba(239, 68, 68, 0.35);
 }
+
+
 
 /* =========================================
    Ownership Pie (20-slice)
@@ -4450,37 +4448,26 @@ function renderLoanTable(loans) {
     const pct = Math.max(0, Math.min(1, loan.ownershipPct ?? 0));
 
     // Build events column manually so we can attach hover listeners to each badge
-let eventsContent = "";
-if (loan.events?.length > 0) {
-  loan.events.forEach(event => {
-    const badgeClass = `loan-badge ${event.type}`;  // Keep your class names
-    const icon = ICONS[event.type] || '•';          // Fallback to dot if missing
+    let eventsContent = "";
+    if (loan.events?.length > 0) {
+      loan.events.forEach(event => {
+        const badgeClass = `event-badge mini ${event.type}`;
+        const icon = ICONS[event.type] || '';  // Safe fallback if type unknown
 
-    // Optional: build tooltip text (you can use getEventBadgeTooltip if already defined)
-    let tooltipText = "";
-    if (event.type === "deferral") {
-      const start = event.startDate || event.from ? formatMonthYear(new Date(event.startDate || event.from)) : "Unknown";
-      const months = Number(event.months ?? event.duration ?? 0);
-      tooltipText = `Deferral\nStart: ${start}\nMonths: ${months}`;
-    } else if (event.type === "default") {
-      const month = event.date ? formatMonthYear(new Date(event.date)) : "Unknown";
-      const recovered = Number(event.recoveredAmount ?? 0);
-      tooltipText = `Default\n${month}\nRecovered ${formatCurrency(recovered)}`;
-    } else if (event.type === "prepayment") {
-      const date = event.date ? formatMonthYear(new Date(event.date)) : "Unknown";
-      const amount = Number(event.amount ?? event.principal ?? 0);
-      tooltipText = `Prepayment\n${formatCurrency(amount)}\n${date}`;
+        // Store event data on the badge for tooltip
+        const eventData = JSON.stringify(event).replace(/"/g, '&quot;');
+
+        eventsContent += `
+          <span class="${badgeClass}"
+                data-event='${eventData}'
+                title="">  <!-- title="" prevents native browser tooltip -->
+            ${icon}
+          </span>
+        `;
+      });
     } else {
-      tooltipText = `${event.type.charAt(0).toUpperCase() + event.type.slice(1)}`;
+      eventsContent = "—";
     }
-
-    eventsContent += `
-      <span class="${badgeClass}" title="${tooltipText}">
-        ${icon}
-      </span>
-    `;
-  });
-}  
 
     tr.innerHTML = `
       <td>${loan.loanId ?? ""}</td>
@@ -4498,7 +4485,30 @@ if (loan.events?.length > 0) {
       <td>${formatCurrency(getCurrentNetEarnings(loan))}</td>
     `;
 
+    // Attach hover listeners to each badge after it's in the DOM
+    const badges = tr.querySelectorAll('.event-badge');
+    badges.forEach(badge => {
+      badge.addEventListener('mouseenter', (e) => {
+        try {
+          const eventJson = badge.dataset.event;
+          if (eventJson) {
+            const event = JSON.parse(eventJson);
+            const text = getEventBadgeTooltip(event);  // your tooltip function
+            if (text) showTooltip(e, text);
+          }
+        } catch (err) {
+          console.warn("Failed to show tooltip", err);
+        }
+      });
 
+      badge.addEventListener('mouseleave', () => {
+        try {
+          hideTooltip();
+        } catch (err) {
+          console.warn("Failed to hide tooltip", err);
+        }
+      });
+    });
 
     tr.addEventListener("mouseenter", () => tr.classList.add("row-hover"));
     tr.addEventListener("mouseleave", () => tr.classList.remove("row-hover"));
