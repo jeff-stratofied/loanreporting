@@ -79,7 +79,14 @@
       "termYears": 12,
       "graceYears": 1.5,
       "loanId": "HCZB8N2L8Z",
-      "events": [],
+      "events": [
+        {
+          "id": "82edf7e2-4e81-462b-8cec-e05384176ef4",
+          "type": "prepayment",
+          "date": "2025-11-05",
+          "amount": 1000
+        }
+      ],
       "ownershipLots": [
         {
           "user": "jeff",
