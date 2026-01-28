@@ -1445,7 +1445,6 @@ async function saveToBackend() {
   // VALIDATION — block saving invalid or missing values
   // =====================================================
   for (const loan of updated) {
-    // ---- existing validations ----
     if (loan.principal === "" || loan.principal === null || Number(loan.principal) <= 0) {
       alert(`Loan "${loan.loanName}" must have an Original Loan Amount greater than 0.`);
       status.textContent = "Save blocked";
@@ -1456,7 +1455,6 @@ async function saveToBackend() {
       status.textContent = "Save blocked";
       return;
     }
-    // ---- DEFAULT EVENT VALIDATION ----
     const defaults = loan.events?.filter(e => e.type === "default") || [];
     if (defaults.length > 1) {
       alert(`Loan "${loan.loanName}" has more than one Default event.`);
@@ -1476,7 +1474,6 @@ async function saveToBackend() {
         return;
       }
     }
-    // ---- OWNERSHIP VALIDATION ----
     if (!Array.isArray(loan.ownershipLots) || loan.ownershipLots.length === 0) {
       alert(`Loan "${loan.loanName}" has no ownership lots.`);
       status.textContent = "Save blocked";
@@ -1506,9 +1503,11 @@ async function saveToBackend() {
   // =====================================================
   // UPDATE PLATFORM CONFIG WITH NEW FEE WAIVERS
   // =====================================================
+  let configUpdated = false;
   if (platformConfig && platformConfig.users) {
     platformConfig.users = platformConfig.users.map(user => {
-      if (user.id in userFeeWaivers) {
+      if (user.id in userFeeWaivers && user.feeWaiver !== userFeeWaivers[user.id]) {
+        configUpdated = true;
         return { ...user, feeWaiver: userFeeWaivers[user.id] };
       }
       return user;
@@ -1516,36 +1515,56 @@ async function saveToBackend() {
   }
 
   // =====================================================
-  // SAVE (only runs if validation passed)
+  // SAVE LOANS (existing)
   // =====================================================
+  let loansSaved = false;
   try {
-    const payload = {
-      loans: updated,
-      platformConfig: platformConfig ? {
-        fees: platformConfig.fees,
-        users: platformConfig.users,
-        sha: currentSha
-      } : undefined,
-      sha: currentSha
-    };
-
-    const res = await fetch("https://loanreporting-api.jeff-263.workers.dev/loans", {
+    const loansRes = await fetch("https://loanreporting-api.jeff-263.workers.dev/loans", {
       method: "POST",
       headers: {"Content-Type": "application/json"},
-      body: JSON.stringify(payload)
+      body: JSON.stringify({
+        loans: updated,
+        sha: currentSha
+      })
     });
-
-    const data = await res.json();
-    if (!res.ok) throw data;
-
-    currentSha = data.sha;
-    status.textContent = "Saved ✔";
-    clearDirty();
-
+    const loansData = await loansRes.json();
+    if (!loansRes.ok) throw loansData;
+    currentSha = loansData.sha;
+    loansSaved = true;
   } catch (err) {
-    console.error("Save error:", err);
-    status.textContent = "Save failed";
+    console.error("Loans save failed:", err);
+    status.textContent = "Loans save failed";
+    return;
   }
+
+  // =====================================================
+  // SAVE PLATFORM CONFIG (new - only if changed)
+  // =====================================================
+  if (configUpdated) {
+    try {
+      const configRes = await fetch("https://loanreporting-api.jeff-263.workers.dev/platformConfig", {
+        method: "POST",
+        headers: {"Content-Type": "application/json"},
+        body: JSON.stringify({
+          fees: platformConfig.fees,
+          users: platformConfig.users,
+          sha: currentSha  // optional, backend can ignore if not needed
+        })
+      });
+      const configData = await configRes.json();
+      if (!configRes.ok) throw configData;
+      // Update local sha if backend returns new one
+      if (configData.sha) currentSha = configData.sha;
+    } catch (err) {
+      console.error("Config save failed:", err);
+      status.textContent = "Config save failed (waivers may not persist)";
+      return;
+    }
+  }
+
+  // Success
+  status.textContent = "Saved ✔";
+  clearDirty();
 }
 
 
