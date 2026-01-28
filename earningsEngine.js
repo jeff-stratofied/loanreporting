@@ -18,8 +18,13 @@
 
 import {
   addMonths,
-  isDeferredMonth
+  isDeferredMonth,
+   GLOBAL_FEE_CONFIG,
+  USERS,
+  resolveFeeWaiverFlags,     // ← we'll use this later
+  getMonthlyServicingRate    // ← we'll use this later
 } from "./loanEngine.js?v=dev";
+
 
 /* ============================================================
    Helpers (local, pure)
@@ -94,6 +99,15 @@ export function buildEarningsSchedule({
     throw new Error(`Invalid loanStartDate in earnings engine: ${loanStartDate}`);
   }
 
+console.log("Fees config available in earningsEngine?", {
+    userId: user || "(no user)",
+    setupFee: GLOBAL_FEE_CONFIG?.setupFee,
+    monthlyServicingBps: GLOBAL_FEE_CONFIG?.monthlyServicingBps,
+    userWaiver: USERS?.[user]?.feeWaiver || "(not found)",
+    hasGlobalConfig: !!GLOBAL_FEE_CONFIG,
+    numUsersInConfig: Object.keys(USERS || {}).length
+  });
+ 
   // ----------------------------------------------------------
   // Normalize amort rows with ownership + calendar dates
   // (LOT-AWARE: ownership can change over time)
