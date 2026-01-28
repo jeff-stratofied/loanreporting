@@ -1390,15 +1390,16 @@ import {
     buildPortfolioViews,
   isDeferredMonth,
     setGlobalFeeConfig,
-setUsersFromPlatformConfig
+setUsersFromPlatformConfig,
+    loadPlatformConfig,
+    GLOBAL_FEE_CONFIG, 
+    USERS
 } from "./loanEngine.js?v=dev";
 
   import {
   normalizeOwnership,
   getUserOwnershipPct
 } from "./ownershipEngine.js?v=dev";
-
-import { loadPlatformConfig, GLOBAL_FEE_CONFIG, USERS } from "./loanEngine.js?v=dev";
 
 let earningsDataReadyResolve;
 const earningsDataReady = new Promise(resolve => {
@@ -1437,6 +1438,7 @@ let PORTFOLIO_START = null;
 let PORTFOLIO_KPIS = null;
   let TABLE_SORT_WIRED = false;
 
+  let platformConfig = null;
 
 if (isEmbed) {
   document.documentElement.style.visibility = 'hidden';
@@ -4660,29 +4662,31 @@ function updateSortSelectFromTable(key, dir) {
 
 async function initPage() {
   try {
-// Load platform config first (fees + users + waivers)
-await loadPlatformConfig(
-"https://jeff-stratofied.github.io/loanreporting/data/platformConfig.json"
-);
+    // 1️⃣ Load platform config (fees + users + waivers)
+    // IMPORTANT: loadPlatformConfig RETURNS the config
+    const platformConfig = await loadPlatformConfig(
+      "https://jeff-stratofied.github.io/loanreporting/data/platformConfig.json"
+    );
 
-// ✅ Apply platform config to loanEngine globals
-if (platformConfig?.fees) {
-setGlobalFeeConfig(platformConfig.fees);
-}
+    // 2️⃣ Apply platform config to loanEngine globals (explicit + safe)
+    if (platformConfig?.fees) {
+      setGlobalFeeConfig(platformConfig.fees);
+    }
 
-if (Array.isArray(platformConfig?.users)) {
-setUsersFromPlatformConfig(platformConfig.users);
-}
-  
-  await loadLoansFromBackend();                     // ← now normalized + scheduled
+    if (Array.isArray(platformConfig?.users)) {
+      setUsersFromPlatformConfig(platformConfig.users);
+    }
 
-  // Rebuild earnings-specific derived data (should now work better)
-  rebuildLoansWithEarnings();
+    // 3️⃣ Load loans AFTER config so fee logic is correct
+    await loadLoansFromBackend();
 
-} catch (err) {
-console.error("Earnings init failed:", err);
-}
-    
+    // 4️⃣ Rebuild earnings-specific derived data
+    rebuildLoansWithEarnings();
+
+  } catch (err) {
+    console.error("Earnings init failed:", err);
+  }
+
   PORTFOLIO_START = getPortfolioStartDate(loansWithEarnings);
 
   // ── Defensive fallback for any lingering "MISSING" ──────────────────
