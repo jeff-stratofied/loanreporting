@@ -367,20 +367,23 @@
 }
 
 /* Light colored backgrounds — match amort opacity */
-.loan-badge.prepayment {
-  background: rgba(34, 197, 94, 0.18);  /* Light green */
-  color: #166534;
-}
-
-.loan-badge.deferral {
-  background: rgba(234, 179, 8, 0.18);  /* Light yellow/orange */
-  color: #92400e;
-}
-
-.loan-badge.default {
-  background: rgba(239, 68, 68, 0.15);  /* Light red */
-  color: #b91c1c;
-}
+ .loan-badge.default {
+      background: rgba(239, 68, 68, 0.12);
+      color: #b91c1c;
+      border-color: rgba(239, 68, 68, 0.35);
+    }
+    
+    .loan-badge.deferral {
+      background: rgba(234, 179, 8, 0.15);
+      color: #92400e;
+      border-color: rgba(234, 179, 8, 0.35);
+    }
+    
+    .loan-badge.prepayment {
+      background: rgba(34, 197, 94, 0.15);
+      color: #166534;
+      border-color: rgba(34, 197, 94, 0.35);
+    }
 
 /* =========================================
    Ownership Pie (20-slice)
@@ -1890,7 +1893,7 @@ if (sortLoansEl) {
 function renderTableEventBadge(loan) {
   if (!loan.eventType) return "";
 
-  // Build tooltip text (earnings wording, multi-line for readability)
+  // Build tooltip text (multi-line, earnings wording)
   let tooltip = "";
   if (loan.eventType === "deferral") {
     const start = loan.events?.find(e => e.type === "deferral")?.startDate || "Unknown";
@@ -1911,7 +1914,7 @@ function renderTableEventBadge(loan) {
   return `
     <span
       class="table-event-badge ${loan.eventType}"
-      title="${tooltip}"
+      title="${tooltip}"  <!-- native fallback if needed -->
     >
       ${EVENT_ICON[loan.eventType] || '•'}
     </span>
@@ -4442,7 +4445,7 @@ function renderLoanTable(loans) {
   loans.forEach(loan => {
     const tr = document.createElement("tr");
 
-    // Row shading
+    // Row shading (unchanged)
     if (loan.eventType === "prepayment") tr.classList.add("event-prepayment");
     if (loan.eventType === "deferral")   tr.classList.add("event-deferral");
     if (loan.eventType === "default")    tr.classList.add("event-default");
@@ -4452,7 +4455,7 @@ function renderLoanTable(loans) {
 
     const pct = Math.max(0, Math.min(1, loan.ownershipPct ?? 0));
 
-    // Events column: use the badge function, no placeholder if empty
+    // Events column: call the badge function, no placeholder
     const eventsContent = loan.events?.length > 0 
       ? loan.events.map(event => renderTableEventBadge({ ...loan, eventType: event.type })).join('')
       : "";  // Empty cell like amort
@@ -4472,6 +4475,45 @@ function renderLoanTable(loans) {
       <td>${(pct * 100).toFixed(1)}%</td>
       <td>${formatCurrency(getCurrentNetEarnings(loan))}</td>
     `;
+
+    // Attach hover listeners to each badge (MATCH AMORT)
+    const badges = tr.querySelectorAll('.table-event-badge');
+    badges.forEach(badge => {
+      badge.addEventListener("mouseenter", e => {
+        // Find the corresponding event for this badge
+        const eventType = [...badge.classList].find(cls => cls !== "table-event-badge");
+        const event = loan.events?.find(ev => ev.type === eventType);
+        if (!event) return;
+
+        // Build tooltip content (same as amort)
+        const lines = [];
+        if (eventType === "prepayment") {
+          lines.push(
+            "Prepayment",
+            `Date: ${formatDate(new Date(event.date + "T00:00:00"))}`,
+            `Amount: ${formatCurrency(event.amount)}`
+          );
+        } else if (eventType === "default") {
+          lines.push(
+            "Default",
+            `Date: ${formatMonthYear(new Date(event.date + "T00:00:00"))}`,
+            `Recovered: ${formatCurrency(event.recovered ?? 0)}`
+          );
+        } else if (eventType === "deferral") {
+          lines.push(
+            "Deferral",
+            `Start: ${formatMonthYear(new Date(event.startDate + "T00:00:00"))}`,
+            `Months: ${event.months}`
+          );
+        }
+
+        // Show tooltip (use amort-style functions)
+        setMiniTooltipContent(lines);
+        positionMiniTooltip(e.clientX, e.clientY - 8, 16);
+      });
+
+      badge.addEventListener("mouseleave", hideMiniTooltip);
+    });
 
     // Row hover and click (unchanged)
     tr.addEventListener("mouseenter", () => tr.classList.add("row-hover"));
