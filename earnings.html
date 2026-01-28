@@ -340,48 +340,50 @@
 
 
 /* =========================================
-   Loan event badges (match Amort layout/icons/classes)
+   Loan event badges — MATCH AMORT: circle icon only + tooltip
    ========================================= */
 .loan-badges {
   display: flex;
   gap: 6px;
-  margin-top: 4px;  /* Tight spacing for position between name and school */
+  margin-top: 4px;
   flex-wrap: wrap;
 }
 
 .loan-badge {
   display: inline-flex;
   align-items: center;
-  gap: 4px;
-  padding: 2px 6px;
-  font-size: 11px;
-  font-weight: 600;
-  border-radius: 999px;
-  border: 1px solid var(--border);
-  background: var(--surface);
-  color: var(--text);
-  cursor: pointer;  
+  justify-content: center;
+  width: 24px;               /* Slightly larger circle than amort for visibility */
+  height: 24px;
+  border-radius: 50%;        /* Full circle */
+  font-size: 14px;           /* Bigger emoji/symbol */
+  font-weight: normal;
+  line-height: 1;
+  cursor: pointer;
+  border: none;              /* Remove border for clean amort look */
+  box-shadow: 0 1px 3px rgba(0,0,0,0.1);  /* Subtle shadow like amort */
+  transition: transform 0.1s ease;
 }
 
+.loan-badge:hover {
+  transform: scale(1.15);    /* Slight zoom on hover — nice touch */
+}
+
+/* Colored backgrounds — keep your earnings colors */
 .loan-badge.prepayment {
-  background: rgba(34, 197, 94, 0.18);
-  color: #166534;
-  border-color: rgba(34, 197, 94, 0.35);
+  background: rgba(34, 197, 94, 0.9);   /* Stronger green opacity for circle */
+  color: white;
 }
 
 .loan-badge.deferral {
-  background: rgba(234, 179, 8, 0.18);
-  color: #92400e;
-  border-color: rgba(234, 179, 8, 0.35);
+  background: rgba(234, 179, 8, 0.9);   /* Stronger yellow/orange */
+  color: white;
 }
 
 .loan-badge.default {
-  background: rgba(239, 68, 68, 0.15);
-  color: #b91c1c;
-  border-color: rgba(239, 68, 68, 0.35);
+  background: rgba(239, 68, 68, 0.9);   /* Stronger red */
+  color: white;
 }
-
-
 
 /* =========================================
    Ownership Pie (20-slice)
@@ -4451,25 +4453,25 @@ function renderLoanTable(loans) {
 let eventsContent = "";
 if (loan.events?.length > 0) {
   loan.events.forEach(event => {
-    const badgeClass = `event-badge mini ${event.type}`;
-    const icon = ICONS[event.type] || '';
+    const badgeClass = `loan-badge ${event.type}`;  // Keep your class names
+    const icon = ICONS[event.type] || '•';          // Fallback to dot if missing
 
-    // Build native browser tooltip text — same format as amort
+    // Optional: build tooltip text (you can use getEventBadgeTooltip if already defined)
     let tooltipText = "";
     if (event.type === "deferral") {
       const start = event.startDate || event.from ? formatMonthYear(new Date(event.startDate || event.from)) : "Unknown";
       const months = Number(event.months ?? event.duration ?? 0);
-      tooltipText = `Deferral\n${start} • ${months} months`;
+      tooltipText = `Deferral\nStart: ${start}\nMonths: ${months}`;
     } else if (event.type === "default") {
       const month = event.date ? formatMonthYear(new Date(event.date)) : "Unknown";
       const recovered = Number(event.recoveredAmount ?? 0);
-      tooltipText = `Default\n${month} • Recovered ${formatCurrency(recovered)}`;
+      tooltipText = `Default\n${month}\nRecovered ${formatCurrency(recovered)}`;
     } else if (event.type === "prepayment") {
       const date = event.date ? formatMonthYear(new Date(event.date)) : "Unknown";
       const amount = Number(event.amount ?? event.principal ?? 0);
-      tooltipText = `Prepayment\n${formatCurrency(amount)} • ${date}`;
+      tooltipText = `Prepayment\n${formatCurrency(amount)}\n${date}`;
     } else {
-      tooltipText = `${event.type.charAt(0).toUpperCase() + event.type.slice(1)}\n${event.date ? formatMonthYear(new Date(event.date)) : "Details"}`;
+      tooltipText = `${event.type.charAt(0).toUpperCase() + event.type.slice(1)}`;
     }
 
     eventsContent += `
@@ -4478,8 +4480,9 @@ if (loan.events?.length > 0) {
       </span>
     `;
   });
-} else {
-  eventsContent = "—";
+}  // No "—" — empty cell to match amort when no events
+
+// ... rest of your tr.innerHTML stays the same, with <td>${eventsContent}</td>
 }
 
     tr.innerHTML = `
