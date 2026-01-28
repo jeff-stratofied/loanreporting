@@ -133,7 +133,6 @@ async function handleFetch(request, env) {
           path: configPath,
           content: contentStr,
           message: "Update platform config via admin",
-          sha: latestSha  // null = fetch fresh
         }));
       }
 
