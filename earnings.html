@@ -4423,6 +4423,13 @@ function renderLoanTable(loans) {
   const tbody = table?.querySelector("tbody");
   if (!tbody) return;
 
+  // Define ICONS to match amort page (deferral: shield, default: warning, prepayment: money bag)
+  const ICONS = {
+    deferral: '⏸',
+    default: '⚠️',
+    prepayment: '💰'  // Adjust if amort uses different icons
+  };
+
   // -------------------------
   // Render rows
   // -------------------------
@@ -4445,7 +4452,7 @@ function renderLoanTable(loans) {
     if (loan.events?.length > 0) {
       loan.events.forEach(event => {
         const badgeClass = `event-badge mini ${event.type}`;
-        const icon = ICONS?.[event.type] || '';  // use your ICONS object if defined
+        const icon = ICONS[event.type] || '';  // Safe fallback if type unknown
 
         // Store event data on the badge for tooltip
         const eventData = JSON.stringify(event).replace(/"/g, '&quot;');
@@ -4497,7 +4504,6 @@ function renderLoanTable(loans) {
       badge.addEventListener('mouseleave', hideTooltip);
     });
 
-    // Existing row hover & click handlers
     tr.addEventListener("mouseenter", () => tr.classList.add("row-hover"));
     tr.addEventListener("mouseleave", () => tr.classList.remove("row-hover"));
 
