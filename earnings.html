@@ -4525,7 +4525,16 @@ badge.addEventListener("mouseenter", (e) => {
 
     // ✅ Earnings canonical tooltip system
     setMiniTooltipContent(lines);
-    positionMiniTooltip(e.clientX, e.clientY - 8, 16);
+    const rect = badge.getBoundingClientRect();
+
+// Center horizontally over badge row
+const x = rect.left + rect.width / 2;
+
+// Position ABOVE the row (same lift as tiles)
+const y = rect.top - 12;
+
+// Match tile spacing (vertical gap)
+positionMiniTooltip(x, y, 24);
 
     // ✅ MATCH AMORT: highlight row on badge hover
     tr.classList.add("row-hover");
