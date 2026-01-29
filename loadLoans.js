@@ -3,15 +3,11 @@
 const API_URL = "https://loanreporting-api.jeff-263.workers.dev/loans";
 
 // ===============================
-// loadLoans.js  (API fetch only)
+// LOAD loans (API fetch only)
 // ===============================
-
-// Fetch loans from Cloudflare Worker
 export async function loadLoans() {
-  const url = "https://loanreporting-api.jeff-263.workers.dev/loans";
-
   try {
-    const res = await fetch(url);
+    const res = await fetch(API_URL, { cache: "no-store" });
 
     if (!res.ok) {
       console.error("Fetch failed:", res.status, res.statusText);
@@ -19,14 +15,9 @@ export async function loadLoans() {
     }
 
     const data = await res.json();
-    
-  if (Array.isArray(data.loans)) {
-    return data;
-  }
 
-    // Worker returns: { loans:[...], sha:"..." }
     if (Array.isArray(data.loans)) {
-      return data;        // <-- CORRECT
+      return data; // { loans, sha }
     }
 
     console.warn("Unexpected API shape:", data);
@@ -37,10 +28,6 @@ export async function loadLoans() {
     return { loans: [], sha: null };
   }
 }
-
-
-
-
 
 // ----------------------------------------------------
 // SAVE loans  (POST { loans, sha })
@@ -61,5 +48,5 @@ export async function saveLoans(loans, sha) {
     throw new Error(`Save error: ${res.status}`);
   }
 
-  return await res.json();  // includes content.sha
+  return await res.json(); // includes content.sha
 }
