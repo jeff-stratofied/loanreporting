@@ -108,6 +108,14 @@ console.log("Fees config available in earningsEngine?", {
     numUsersInConfig: Object.keys(USERS || {}).length
   });
 
+console.log("SETUP FEE CHECK", {
+  isFirstPeriod,
+  waiveSetup,
+  waiveAll,
+  loanId: loan.id,
+  periodIndex
+});
+ 
 // Use loaded platform config (with fallbacks)
 const setupFeeAmount = GLOBAL_FEE_CONFIG?.setupFee ?? 150;
 const monthlyRate = (GLOBAL_FEE_CONFIG?.monthlyServicingBps ?? 25) / 10000;
