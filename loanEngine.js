@@ -84,13 +84,20 @@ export function resolveFeeWaiverFlags(user, loan) {
   const userWaiver = user?.feeWaiver || "none";
   const loanWaiver = loan?.feeWaiver || "none";
 
+  // Loan-level override beats user-level
   const effectiveWaiver =
     loanWaiver !== "none" ? loanWaiver : userWaiver;
 
+  // Normalize to tokens (supports "setup_grace", "setup+grace", etc)
+  const tokens = effectiveWaiver
+    .toLowerCase()
+    .replace("+", "_")
+    .split("_");
+
   return {
-    waiveSetup: ["setup", "grace", "all"].includes(effectiveWaiver),
-    waiveMonthly: ["grace", "all"].includes(effectiveWaiver),
-    waiveAll: effectiveWaiver === "all"
+    waiveSetup: tokens.includes("setup") || tokens.includes("all"),
+    waiveMonthly: tokens.includes("grace") || tokens.includes("all"),
+    waiveAll: tokens.includes("all")
   };
 }
 
