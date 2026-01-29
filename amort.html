@@ -1253,11 +1253,6 @@ const EVENT_SORT_ORDER = {
   prepayment: 3
 };
 
-function monthKeyFromDate(d) {
-  return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}`;
-}
-
-    
 function getLoanPrimaryEventType(loan) {
   if (!Array.isArray(loan.events)) return null;
 
@@ -1645,29 +1640,36 @@ const monthAnchor = new Date(
 // =====================================
 // Build event lookup (READ-ONLY)
 // =====================================
-const eventByMonthKey = {};
+const eventByMonth = {};
 
 // 2️⃣ Overlay non-terminal events from loan.events
 (loan.events || []).forEach(e => {
   if (!e.type) return;
 
   // DEFERRAL
-if (e.type === "deferral" && e.startDate && e.months) {
-  const start = new Date(e.startDate + "T00:00:00");
+  if (e.type === "deferral" && (e.startDate || e.date) && e.months) {
+    const startIdx = monthIndexFromDate(
+  e.startDate || e.date,
+  schedule
+);
 
-  for (let i = 0; i < e.months; i++) {
-    const d = new Date(start.getFullYear(), start.getMonth() + i, 1);
-    eventByMonthKey[monthKeyFromDate(d)] = "deferral";
+    if (startIdx !== null) {
+      for (let i = 0; i < e.months; i++) {
+        eventByMonth[startIdx + i] = "deferral";
+      }
+    }
+    return;
   }
-  return;
-}
 
   // PREPAYMENT
-  if (e.type === "prepayment" && e.date) {
-  const d = new Date(e.date + "T00:00:00");
-  eventByMonthKey[monthKeyFromDate(d)] = "prepayment";
-  return;
-}
+  if (e.type === "prepayment") {
+    const row = schedule.find(
+  r => r.prepayment && r.prepayment > 0
+);
+
+    if (row) eventByMonth[row.monthIndex] = "prepayment";
+    return;
+  }
 });
 
 // DEFAULT — anchor highlight strictly to event date
@@ -1680,8 +1682,7 @@ if (defaultEvent) {
 );
 
   if (idx !== null) {
-    const d = new Date(defaultEvent.date + "T00:00:00");
-eventByMonthKey[monthKeyFromDate(d)] = "default";
+    eventByMonth[idx] = "default";
   }
 }
 
@@ -1708,8 +1709,7 @@ tr.innerHTML = `
 
 
 // Apply event highlight (if any)
-const eventKey = monthKeyFromDate(rowDate);
-const eventType = eventByMonthKey[eventKey];
+const eventType = eventByMonth[r.monthIndex];
 if (eventType) {
   tr.classList.add(`event-${eventType}`);
 }
@@ -4524,6 +4524,18 @@ function renderPaymentsDrawer() {
   if (!loansForSeries.length) {
     return;
   }
+
+console.log(
+  '[KPI4 SOURCE CHECK]',
+  loansForSeries.map(l => ({
+    loanId: l.loanId,
+    ownershipPct: l.ownershipPct,
+    payment0: l.amort?.schedule?.[0]?.payment,
+    isScaled: l.ownershipPct < 1
+      ? l.amort?.schedule?.[0]?.payment < l.purchasePrice
+      : true
+  }))
+);
 
   
   drawerSecondaryTitle.textContent = 'Total Invested';
