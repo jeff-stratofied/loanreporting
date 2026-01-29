@@ -1680,11 +1680,9 @@ if (defaultEvent) {
   }
 }
 
-  console.log(
-  "EVENT ROW",
-  r.monthIndex,
-  eventByMonth[r.monthIndex]
-);
+// =====================================
+// Render amort table rows
+// =====================================
 schedule.forEach((r) => {
   const rowDate = displayDateForMonthIndex(r.monthIndex, monthAnchor);
 
@@ -1712,12 +1710,15 @@ schedule.forEach((r) => {
   if (isBeforePurchase) tr.style.opacity = "0.45";
 
   if (isPurchaseMonth) {
-    tr.querySelectorAll("td").forEach((td) => {
+    tr.querySelectorAll("td").forEach(td => {
       td.style.borderTop = "2px solid #22c55e";
     });
   }
 
   amortBody.appendChild(tr);
+
+  // 🔍 Optional debug (safe)
+  // console.log("EVENT ROW", r.monthIndex, eventType);
 });
 
 
