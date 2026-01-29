@@ -533,13 +533,25 @@ const schoolOptions = [
 document.getElementById("add-row").addEventListener("click", () => {
   const newLoan = normalizeLoan({}, 0);
 
+  // Ensure ID exists (important for drawer)
+  if (!newLoan.id) {
+    newLoan.id = crypto.randomUUID();
+  }
+
   // Initialize empty ownership
   newLoan.ownershipLots = [];
+  newLoan._isNew = true;
 
   // Add to TOP of table
   currentLoans.unshift(newLoan);
 
   renderTable();
+
+  // Force ownership setup immediately
+  setTimeout(() => {
+    openOwnershipDrawer(newLoan.id);
+  }, 0);
+
   markDirty();
 });
 
@@ -935,6 +947,16 @@ function openOwnershipDrawer(loan) {
     <button id="add-lot-btn" style="margin-top:8px">+ Add Lot</button>
 
     <hr style="margin:14px 0;border-color:var(--border)">
+
+<div
+  id="ownership-warning"
+  style="display:none;color:#b91c1c;font-size:0.8rem;margin-bottom:10px"
+>
+  Ownership must total 100% and include purchase date + buy price.
+</div>
+
+<button id="ownership-save">Save Ownership</button>
+<button id="close-ownership-btn">Close</button>
 
     <button id="close-ownership-btn">Close</button>
   `;
