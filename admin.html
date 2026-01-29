@@ -256,6 +256,25 @@ tbody tr:hover {
    INPUTS + SELECTS
    =========================================== */
 
+.ownership-pill {
+  width: 100%;
+  text-align: left;
+  background: #f8fafc;
+  border: 1px solid #e5e7eb;
+  border-radius: 8px;
+  padding: 6px 8px;
+  cursor: pointer;
+}
+
+.ownership-pill:hover {
+  background: #eef2ff;
+  border-color: #6366f1;
+}
+
+.ownership-pill:active {
+  transform: translateY(1px);
+}
+  
 input, select {
   width: 100%;
   box-sizing: border-box;
@@ -1308,29 +1327,51 @@ function sortLoans() {
 
 
 function renderOwnershipCell(loan) {
-  const byUser = {};
+  const hasOwnership = loan.ownershipLots && loan.ownershipLots.length > 0;
 
-  loan.ownershipLots.forEach(lot => {
-    if (!byUser[lot.user]) byUser[lot.user] = [];
-    byUser[lot.user].push(lot);
-  });
+  // Build summary text (existing logic, unchanged)
+  let summaryHtml = "";
 
-  return Object.entries(byUser)
-    .map(([user, lots]) => {
-      return lots
-        .sort((a, b) => new Date(a.purchaseDate) - new Date(b.purchaseDate))
-        .map(lot => {
-          const pct = Math.round(lot.pct * 100);
-          const date = lot.purchaseDate || "—";
-          return `<div style="font-size:11px">
-            <strong>${user}</strong> ${pct}% <span style="color:var(--muted)">(${date})</span>
-          </div>`;
-        })
-        .join("");
-    })
-    .join("");
+  if (hasOwnership) {
+    const byUser = {};
+
+    loan.ownershipLots.forEach(lot => {
+      if (!byUser[lot.user]) byUser[lot.user] = [];
+      byUser[lot.user].push(lot);
+    });
+
+    summaryHtml = Object.entries(byUser)
+      .map(([user, lots]) => {
+        return lots
+          .sort((a, b) => new Date(a.purchaseDate) - new Date(b.purchaseDate))
+          .map(lot => {
+            const pct = Math.round(lot.pct * 100);
+            const date = lot.purchaseDate || "—";
+            return `<div style="font-size:11px; line-height:1.2">
+              <strong>${user}</strong> ${pct}%
+              <span style="color:var(--muted)">(${date})</span>
+            </div>`;
+          })
+          .join("");
+      })
+      .join("");
+  }
+
+  // Clickable wrapper
+  return `
+    <button
+      class="ownership-pill"
+      onclick="openOwnershipDrawer('${loan.id}')"
+      title="Edit ownership"
+    >
+      ${
+        hasOwnership
+          ? summaryHtml
+          : `<span style="opacity:0.7">Owner</span>`
+      }
+    </button>
+  `;
 }
-
   
 /* Render table */
 function renderTable() {
