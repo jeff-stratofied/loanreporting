@@ -219,6 +219,16 @@ th, td {
   border-bottom: 1px solid var(--border);
 }
 
+th,
+td {
+  vertical-align: middle;
+}
+
+td.actions,
+th[colspan="2"] {
+  text-align: center;
+}
+  
 th {
   color: var(--muted);
   font-weight: 600;
@@ -434,8 +444,7 @@ input:focus, select:focus {
     <th data-field="termYears" class="sortable col-years">Term (yrs)</th>
     <th data-field="graceYears" class="sortable col-years">Grace (yrs)</th>
     <th>Waive Fees</th>  
-    <th style="text-align:center">Events</th>
-    <th colspan="2" style="text-align:center">Actions</th>
+    <th colspan="3" style="text-align:center">Actions</th>
   </tr>
 </thead>
   <tbody id="loan-table-body"></tbody>
