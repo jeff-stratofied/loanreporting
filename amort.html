@@ -1701,6 +1701,15 @@ schedule.forEach((r) => {
     <td style="text-align:right">${formatCurrency(r.balance)}</td>
   `;
 
+  if (eventByMonth[r.monthIndex]) {
+    console.log(
+      "ROW HIT",
+      r.monthIndex,
+      displayDateForMonthIndex(r.monthIndex, monthAnchor),
+      eventByMonth[r.monthIndex]
+    );
+  }
+  
   // ✅ EXACTLY ONE lookup, for THIS row
   const eventType = eventByMonth[r.monthIndex];
   if (eventType) {
