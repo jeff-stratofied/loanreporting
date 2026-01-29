@@ -1685,35 +1685,30 @@ if (defaultEvent) {
   r.monthIndex,
   eventByMonth[r.monthIndex]
 );
-  
 schedule.forEach((r) => {
-
   const rowDate = displayDateForMonthIndex(r.monthIndex, monthAnchor);
 
   const isBeforePurchase = rowDate < purchaseDate;
 
-  // purchase month = same calendar month as purchaseDate
   const isPurchaseMonth =
     rowDate.getFullYear() === purchaseDate.getFullYear() &&
     rowDate.getMonth() === purchaseDate.getMonth();
 
   const tr = document.createElement("tr");
-tr.innerHTML = `
-  <td style="text-align:left">${formatDate(rowDate)}</td>
-  <td style="text-align:right">${formatCurrency(r.payment)}</td>
-  <td style="text-align:right">${formatCurrency(r.principalPaid)}</td>
-  <td style="text-align:right">${formatCurrency(r.interest)}</td>
-  <td style="text-align:right">${formatCurrency(r.balance)}</td>
-`;
+  tr.innerHTML = `
+    <td style="text-align:left">${formatDate(rowDate)}</td>
+    <td style="text-align:right">${formatCurrency(r.payment)}</td>
+    <td style="text-align:right">${formatCurrency(r.principalPaid)}</td>
+    <td style="text-align:right">${formatCurrency(r.interest)}</td>
+    <td style="text-align:right">${formatCurrency(r.balance)}</td>
+  `;
 
+  // ✅ EXACTLY ONE lookup, for THIS row
+  const eventType = eventByMonth[r.monthIndex];
+  if (eventType) {
+    tr.classList.add(`event-${eventType}`);
+  }
 
-// Apply event highlight (if any)
-const eventType = eventByMonth[r.monthIndex];
-if (eventType) {
-  tr.classList.add(`event-${eventType}`);
-}
-
-  
   if (isBeforePurchase) tr.style.opacity = "0.45";
 
   if (isPurchaseMonth) {
