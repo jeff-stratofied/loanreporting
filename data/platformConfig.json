@@ -15,7 +15,7 @@
       "id": "nick",
       "name": "Nick",
       "role": "lender",
-      "feeWaiver": "all",
+      "feeWaiver": "setup",
       "active": true
     },
     {
@@ -26,5 +26,5 @@
       "active": true
     }
   ],
-  "sha": "c01058662cf9ffbb5fc18bce59f29a67ed43d9be"
+  "sha": "74df917300293a1dbd268e74d44bf103399fe9f1"
 }
