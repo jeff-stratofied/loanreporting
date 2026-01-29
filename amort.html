@@ -1653,6 +1653,7 @@ const startIdx = startDate
     if (startIdx !== null) {
       for (let i = 0; i < e.months; i++) {
         eventByMonth[startIdx + i] = "deferral";
+        console.log("Set deferral at index:", startIdx + i);
       }
     }
   }
@@ -1664,6 +1665,7 @@ const startIdx = startDate
     const idx = monthIndexFromDate(e.date, schedule);
     if (idx !== null) {
       eventByMonth[idx] = "prepayment";
+      console.log("Set deferral at index:", startIdx + i);
     }
   }
 });
@@ -1674,6 +1676,7 @@ const startIdx = startDate
     const idx = monthIndexFromDate(e.date, schedule);
     if (idx !== null) {
       eventByMonth[idx] = "default";
+      console.log("Set deferral at index:", startIdx + i);
     }
   }
 });
