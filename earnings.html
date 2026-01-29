@@ -1989,8 +1989,6 @@ async function loadLoansFromBackend() {
     // Assign to the global that the rest of the page expects
     loans = normalizedLoans;
 
-    console.log(`Loaded ${loans.length} fully normalized loans`);
-
   } catch (err) {
     console.error("Failed to load loans from backend", err);
     loans = [];
