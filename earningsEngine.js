@@ -99,15 +99,6 @@ export function buildEarningsSchedule({
     throw new Error(`Invalid loanStartDate in earnings engine: ${loanStartDate}`);
   }
 
-console.log("Fees config available in earningsEngine?", {
-    userId: user || "(no user)",
-    setupFee: GLOBAL_FEE_CONFIG?.setupFee,
-    monthlyServicingBps: GLOBAL_FEE_CONFIG?.monthlyServicingBps,
-    userWaiver: USERS?.[user]?.feeWaiver || "(not found)",
-    hasGlobalConfig: !!GLOBAL_FEE_CONFIG,
-    numUsersInConfig: Object.keys(USERS || {}).length
-  });
-
  
 // Use loaded platform config (with fallbacks)
 const setupFeeAmount = GLOBAL_FEE_CONFIG?.setupFee ?? 150;
@@ -120,11 +111,6 @@ const resolvedUser =
   USERS?.[userObj.userId] ||
   userObj;
 
-console.log("Earnings waiver check", {
-  userObj,
-  resolvedUser,
-  feeWaiver: resolvedUser?.feeWaiver
-});
  
 const { waiveSetup, waiveMonthly, waiveAll } =
   resolveFeeWaiverFlags(resolvedUser, {});
