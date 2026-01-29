@@ -200,12 +200,19 @@ if (row.isOwned && Array.isArray(ownershipLots) && !waiveAll && !waiveSetup) {
     const balance = Number(row.balance ?? 0);
 
     // Monthly balance fee scales by active ownership pct
-    let monthlyBalanceFee = 0;
-if (row.isOwned && balance > 0) {
-  const shouldChargeMonthly = !waiveAll && !(deferred && waiveMonthly);
-  if (shouldChargeMonthly) {
-    monthlyBalanceFee = +((balance * monthlyRate) * Number(row.ownershipPct || 0)).toFixed(2);
-  }
+   // Monthly servicing fees ONLY when a payment is made
+const isPayingMonth = Number(row.payment || 0) > 0;
+
+let monthlyBalanceFee = 0;
+
+if (
+  row.isOwned &&
+  balance > 0 &&
+  isPayingMonth &&   // 🔑 HARD RULE
+  !waiveAll
+) {
+  monthlyBalanceFee =
+    +((balance * monthlyRate) * Number(row.ownershipPct || 0)).toFixed(2);
 }
 
     const feeThisMonth = upfrontFeeThisMonth + monthlyBalanceFee;
