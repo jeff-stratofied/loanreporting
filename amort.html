@@ -1716,7 +1716,9 @@ schedule.forEach((r) => {
     tr.classList.add(`event-${eventType}`);
   }
 
-  if (isBeforePurchase) tr.style.opacity = "0.45";
+  if (isBeforePurchase && !eventType) {
+  tr.style.opacity = "0.45";
+}
 
   if (isPurchaseMonth) {
     tr.querySelectorAll("td").forEach(td => {
