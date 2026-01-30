@@ -140,35 +140,24 @@
             display: inline;
         }
 
- .main-container {
-    flex: 1;
-    display: flex;
-    flex-direction: column;
-    padding-left: var(--sidebar-width);          /* keep this for content sliding */
-    transition: padding-left 0.35s ease;
-}
-
-/* When sidebar expands → update variable */
-.sidebar.expanded ~ .main-container {
-    --sidebar-width: 260px;
-}
+        .main-container {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            margin-left: 70px;
+        }
 
         .top-header {
-    height: 60px;
-    background-color: #ffffff;
-    border-bottom: 1px solid var(--border);
-    display: flex;
-    align-items: center;
-    justify-content: flex-end;
-    padding: 0 30px;
-    box-shadow: var(--shadow);
-    gap: 20px;
-    
-    /* Add these two lines */
-    margin-left: calc(-1 * var(--sidebar-width));   /* pulls header back left by the same amount */
-    width: calc(100% + var(--sidebar-width));       /* extends it to compensate */
-    box-sizing: border-box;                         /* ensures padding doesn't add extra width */
-}
+            height: 60px;
+            background-color: #ffffff;
+            border-bottom: 1px solid var(--border);
+            display: flex;
+            align-items: center;
+            justify-content: flex-end;
+            padding: 0 30px;
+            box-shadow: var(--shadow);
+            gap: 20px;
+        }
 
         .header-logo {
             height: 42px;
