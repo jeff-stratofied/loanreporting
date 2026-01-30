@@ -1284,14 +1284,11 @@ viewButtons.forEach(btn => {
 // Back to My Holdings (Reporting context)
 // =========================================
 const cameFromReporting = PAGE_CONTEXT.fromReporting;
-const backRow  = document.getElementById("backToHoldingsRow");
-const backBtn  = document.getElementById("backToHoldingsBtn");
-
+const backRow = document.getElementById("backToHoldingsRow");
+const backBtn = document.getElementById("backToHoldingsBtn");
 if (cameFromReporting && backRow && backBtn) {
   backRow.style.display = "block";
-  
   backBtn.addEventListener("click", () => {
-    // Tell parent/top window to navigate
     window.parent.postMessage({
       type: "back-to-my-holdings"
     }, "*");
