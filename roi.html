@@ -3743,7 +3743,7 @@ async function initROI() {
           if (!openKey) return;
 
           const url = new URL(
-            window.location.origin + "/loanreporting/roi"
+            window.location.origin + "/loanreporting/roi-shell"
           );
           url.searchParams.set("user", PAGE_USER);
           url.searchParams.set("open", openKey);
