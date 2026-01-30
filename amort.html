@@ -1345,17 +1345,20 @@ const backBtn = document.getElementById("backToHoldingsBtn");
 const hiddenTPVLoans = new Set();
 
 
-// Show Back button if this session originated from Reporting
+// =====================================================
+// Back to My Holdings — send message to amort-shell parent
+// =====================================================
 if (CAME_FROM_REPORTING) {
   backRow.style.display = "block";
 
   backBtn.addEventListener("click", () => {
-    // Optional cleanup on explicit exit
+    // Optional cleanup (good to keep)
     sessionStorage.removeItem("cameFromReporting");
     sessionStorage.removeItem("handledReportingEntry");
 
-    window.location.href =
-      "/loanreporting/reporting?user=" + PAGE_CONTEXT.user;
+    window.parent.postMessage({
+      type: "back-to-my-holdings"
+    }, "*");
   });
 }
 
