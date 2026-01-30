@@ -552,7 +552,7 @@ function buildFrames(user) {
   const v = Date.now(); // 🔒 force iframe reload
 
   document.getElementById("roiFrame").src =
-  `/loanreporting/roi-shell.html?user=${user}&from=reporting&embed=true&open=rates&v=${v}`;
+  `/loanreporting/roi.html?user=${user}&from=reporting&embed=true&open=rates&v=${v}`;
 
   document.getElementById("earningsFrame").src =
     `/loanreporting/earnings.html?user=${user}&embed=true&open=kpi2&v=${v}`;
