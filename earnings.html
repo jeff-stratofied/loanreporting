@@ -1598,7 +1598,7 @@ const TODAY = getStandardToday();
 // =====================================================
 function redirectToFullEarnings(openParam = "projected") {
   const url =
-    `/loanreporting/earnings.html` +
+    `/loanreporting/earnings-shell.html` +
     `?user=${PAGE_USER}` +
     `&from=reporting` +
     (openParam ? `&open=${encodeURIComponent(openParam)}` : "");
