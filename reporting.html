@@ -16,14 +16,21 @@
             --muted: #64748b;
             --brand: #0ea5e9;
             --shadow: 0 12px 30px rgba(15,23,42,0.06);
+            --grad-top: var(--surface);
+    --grad-bottom: var(--card);
         }
 
+        html[data-theme="dark"] body {
+    background: linear-gradient(180deg, #0b1224 0%, #0f172a 100%);
+}
+        
         body, html {
             margin: 0;
             padding: 0;
             height: 100%;
             font-family: 'Roboto', sans-serif;
-            background-color: var(--bg);
+            background: linear-gradient(180deg, var(--grad-top) 0%, var(--grad-bottom) 100%);
+    background-color: var(--bg);
             color: var(--text);
             overflow: hidden;
         }
