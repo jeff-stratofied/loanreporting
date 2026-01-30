@@ -965,6 +965,10 @@ tr.event-default td {
   transform: scale(1.05);
 }
 
+    /* Hide user and mode toggle when in shell/iframe */
+body.shell .header-controls {
+  display: none;
+}
     
   </style>
 </head>
@@ -5461,7 +5465,11 @@ if (PAGE_CONTEXT.isEmbed) {
 // =====================================================
 const params = new URLSearchParams(window.location.search);
 
-if (params.get("embed") === "true" && params.get("open")) {
+  if (params.get("shell") === "true") {
+  document.body.classList.add("shell");  // Hide controls
+}
+
+if (params.get("open")) {  // Removed embed check to open drawer always when param is set
   // Table view is FULL-PAGE ONLY — never iframe
   localStorage.removeItem("roiTableView");
 
