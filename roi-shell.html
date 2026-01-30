@@ -210,21 +210,6 @@
   flex-direction: column;
 }
 
-        .back-row {
-          padding: 24px 40px 0;
-          flex-shrink: 0;  /* Don't let back button shrink */
-        }
-
-        .back-link {
-          appearance: none;
-          background: none;
-          border: none;
-          color: var(--brand);
-          cursor: pointer;
-          font-weight: 500;
-          font-size: 16px;
-        }
-
        .iframe-wrapper {
   flex: 1;                    /* Grow to fill remaining vertical space */
   width: 100%;                /* Full width of parent */
@@ -288,10 +273,6 @@
       </header>
 
       <main class="content">
-        <!-- Back button -->
-        <div class="back-row">
-          <button class="back-link" onclick="history.back()">← Back to My Holdings</button>
-        </div>
 
         <!-- Wrapper for centering iframe -->
         <div class="iframe-wrapper">
