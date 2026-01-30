@@ -895,7 +895,16 @@ addDefaultBtn.onclick = () => {
 }
 }
 
-function openOwnershipDrawer(loan) {
+function openOwnershipDrawer(loanOrId) {
+  const loan =
+    typeof loanOrId === "string"
+      ? currentLoans.find(l => String(l.loanId) === String(loanOrId))
+      : loanOrId;
+
+  if (!loan) {
+    console.error("Ownership drawer: loan not found", loanOrId);
+    return;
+  }
   const existing = document.getElementById("ownership-drawer");
   if (existing) existing.remove();
 
@@ -1417,7 +1426,7 @@ function renderOwnershipCell(loan) {
   return `
     <button
       class="ownership-pill"
-      onclick="openOwnershipDrawer('${loan.id}')"
+      onclick="openOwnershipDrawer('${loan.loanId}')"
       title="Edit ownership"
     >
       ${
