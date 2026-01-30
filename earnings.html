@@ -1199,6 +1199,17 @@ tr.row-hover {
   padding-top: 20px !important;
 }
 
+    /* =========================================
+   SHELL / IFRAME MODE — hide Name + theme toggle
+   ========================================= */
+body.shell #themeToggle,
+.shell #themeToggle {
+  display: none !important;
+}
+
+body.shell .header-controls {
+  display: none !important;
+}
     
   </style>
 </head>
@@ -1413,6 +1424,28 @@ const PAGE_USER = urlParams.get("user") || "jeff";
 const isEmbed   = urlParams.get("embed") === "true";
 const cameFromReporting = urlParams.get("from") === "reporting";
 
+<script type="module">
+  // ... existing code ...
+
+  const urlParams = new URLSearchParams(window.location.search);
+
+  const PAGE_USER = urlParams.get("user") || "jeff";
+  const isEmbed   = urlParams.get("embed") === "true";
+  const isShell   = urlParams.get("shell") === "true";   // ← ADD THIS
+  const cameFromReporting = urlParams.get("from") === "reporting";
+
+  // ... rest of your script ...
+
+  if (isShell) {
+    document.body.classList.add("shell");
+  }
+
+  if (isEmbed) {
+    document.documentElement.classList.add("embed-mode");
+  }
+
+  // ... rest of your script ...
+  
 // =====================================================
 // FULL PAGE RELOAD ONLY — clear transient drawer navigation
 // (do NOT clear on normal navigation like iframe redirects)
