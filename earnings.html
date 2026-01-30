@@ -1539,7 +1539,6 @@ function restoreViewFromStorage() {
   });
 }
 
-
 // -----------------------------
 // Wire view buttons
 // -----------------------------
@@ -1550,13 +1549,16 @@ viewButtons.forEach(btn => {
   });
 });
 
-  
+// =====================================================
+// Back to My Holdings — send message to shell parent
+// =====================================================
 if (cameFromReporting && backRow && backBtn) {
   backRow.style.display = "block";
-
+  
   backBtn.addEventListener("click", () => {
-    window.location.href =
-      `/loanreporting/reporting?user=${PAGE_USER}`;
+    window.parent.postMessage({
+      type: "back-to-my-holdings"
+    }, "*");
   });
 }
 
