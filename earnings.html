@@ -2382,7 +2382,7 @@ document.querySelectorAll(".kpi").forEach(tile => {
     // ✅ IFRAME: always escape to full page, preserve which KPI was clicked
     if (isEmbed) {
       const url =
-        `/loanreporting/earnings.html` +
+        `/loanreporting/earnings-shell.html` +
         `?user=${PAGE_USER}` +
         `&from=reporting` +
         `&open=${type}`;
@@ -4758,7 +4758,7 @@ async function initPage() {
       (e) => {
         if (e.target.closest("button, a")) return;
         window.top.location.href =
-          `/loanreporting/earnings.html?user=${PAGE_USER}&open=kpi2`;
+          `/loanreporting/earnings-shell.html?user=${PAGE_USER}&open=kpi2`;
       },
       true
     );
