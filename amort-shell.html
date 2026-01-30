@@ -218,23 +218,22 @@
     flex-direction: column;
 }
     
-.iframe-wrapper {
+ .iframe-wrapper {
     flex: 1;
-    width: 100vw;                                 /* full screen width */
+    width: 100%;
     max-width: none;
     margin: 0;
-    margin-left: calc(-1 * var(--sidebar-width)); /* pulls it back left under sidebar */
-    padding: 0 24px;                              /* keep your right padding, or set padding: 0 16px 0 0; for closer to right edge */
+    padding: 0 24px;
     box-sizing: border-box;
     overflow: auto;
-    background: transparent;
+    background: transparent;           /* ← add this line (important) */
 }
-
-iframe {
-    width: 100%;
-    height: 100%;
-    border: none;
-    display: block;
+    
+        iframe {
+  width: 100%;
+  height: 100%;
+  border: none;
+  display: block;
 }
 
     
