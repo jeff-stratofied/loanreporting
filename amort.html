@@ -2096,7 +2096,9 @@ function buildInvestorAmortView(baseSchedule, loan, user) {
 }
 
 function renderAmortForLoan(loan) {
-console.count("renderAmortForLoan call");
+console.trace("renderAmortForLoan");
+  
+  console.count("renderAmortForLoan call");
 console.log("amortViewMode", amortViewMode);
   
   assert(loan, "renderAmortForLoan called with null loan");
