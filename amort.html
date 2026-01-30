@@ -1379,6 +1379,21 @@ function clearOpenParamFromUrl() {
   history.replaceState({}, "", url.toString());
 }
 
+function resetDrawerToLoanMode() {
+  currentMode = "loan";
+
+  const drawer = document.getElementById("drawer");
+  drawer.classList.remove("kpi-interactive");
+
+  // Clear KPI-only content
+  const drawerExtra = document.getElementById("drawerExtra");
+  if (drawerExtra) drawerExtra.innerHTML = "";
+
+  // Ensure amort container is visible
+  const amortContainer = document.getElementById("drawerAmortContainer");
+  if (amortContainer) amortContainer.style.display = "block";
+}
+    
     
 /* =========================================================
    B. DATA LOADING & NORMALIZATION
@@ -3585,8 +3600,19 @@ function openDrawerForKPI() {
   currentLoan = null;
   currentMode = "kpi";
 
-    const amortToggle = document.getElementById("amortViewToggle");
+  // Hide loan-only UI
+  const amortToggle = document.getElementById("amortViewToggle");
   if (amortToggle) amortToggle.hidden = true;
+
+  const amortContainer = document.getElementById("drawerAmortContainer");
+  if (amortContainer) amortContainer.style.display = "none";
+
+  // Mark drawer as KPI mode
+  drawer.classList.add("kpi-interactive");
+
+  // Clear any previous loan content that might linger
+  const drawerExtra = document.getElementById("drawerExtra");
+  if (drawerExtra) drawerExtra.innerHTML = "";
 }
   
     document.getElementById('closeBtn').addEventListener('click', () => closeDrawer());
@@ -3684,17 +3710,11 @@ function loansToCSV(loans) {
 
 /* ---------- Open drawer for loan ---------- */
 function openDrawerForLoan(loan) {
+resetDrawerToLoanMode();
+  
   claimTooltip("drawer");
   assert(loan, "openDrawerForLoan called with null loan");
 
-  /* delete
-  // =====================================================
-  // HARD RESET KPI-ONLY STATE (restore loan mode)
-  // =====================================================
-  drawer.classList.remove("kpi-interactive");
-  drawerExtra.innerHTML = "";
-  drawerLegend.style.display = "none";
-*/
   
   // =====================================================
   // FORCE STATE FOR PROGRAMMATIC OPEN (URL / embed)
