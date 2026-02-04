@@ -269,7 +269,9 @@ principalThisMonth =
     const netEarnings = +(cumPrincipal + cumInterest - cumFees).toFixed(2);
 
     // ---- monthly deltas ----
-    const monthlyPrincipal = +(cumPrincipal - prevCumPrincipal).toFixed(2);
+    const monthlyPrincipal =
+  +(principalThisMonth || 0).toFixed(2);
+
     const monthlyInterest  = +(cumInterest  - prevCumInterest ).toFixed(2);
     const monthlyFees      = +(cumFees      - prevCumFees     ).toFixed(2);
     const monthlyNet       = +(monthlyPrincipal + monthlyInterest - monthlyFees).toFixed(2);
