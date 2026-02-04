@@ -262,7 +262,14 @@
       "graceYears": 0,
       "feeWaiver": "none",
       "loanId": "O3MVZU9I0G",
-      "events": [],
+      "events": [
+        {
+          "id": "1a60f5bc-a0fc-48cf-96e7-c22b8bde18ef",
+          "type": "prepayment",
+          "date": "2025-01-08",
+          "amount": 5000
+        }
+      ],
       "ownershipLots": [
         {
           "user": "jeff",
