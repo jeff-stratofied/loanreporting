@@ -270,7 +270,7 @@ principalThisMonth =
 
     // ---- monthly deltas ----
     const monthlyPrincipal =
-  +(principalThisMonth || 0).toFixed(2);
+  +Number(principalThisMonth || 0).toFixed(2);
 
     const monthlyInterest  = +(cumInterest  - prevCumInterest ).toFixed(2);
     const monthlyFees      = +(cumFees      - prevCumFees     ).toFixed(2);
