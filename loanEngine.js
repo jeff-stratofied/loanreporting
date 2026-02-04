@@ -569,7 +569,10 @@ const isFirstOwnedMonth =
           displayDate: new Date(loanDate.getFullYear(), loanDate.getMonth(), 1),
 
           payment: +applied.toFixed(2),
-          principalPaid: +applied.toFixed(2),
+          scheduledPrincipal: 0,
+prepaymentPrincipal: +applied.toFixed(2),
+principalPaid: +applied.toFixed(2),
+
           interest: 0,
           balance: +(balance - applied).toFixed(2),
 
@@ -641,11 +644,16 @@ const isFirstOwnedMonth =
           displayDate: new Date(loanDate.getFullYear(), loanDate.getMonth(), 1),
 
           payment: 0,
-          principalPaid: +prepaymentThisMonth.toFixed(2),
+          scheduledPrincipal: 0,
+prepaymentPrincipal: +prepaymentThisMonth.toFixed(2),
+principalPaid: +prepaymentThisMonth.toFixed(2),
+
+prepayment: +prepaymentThisMonth.toFixed(2),
+
           interest: 0,
           balance: +balance.toFixed(2),
 
-          prepayment: +prepaymentThisMonth.toFixed(2),
+          
           accruedInterest: +accruedInterest.toFixed(2),
 
           feeThisMonth: +feeThisMonth.toFixed(2),
@@ -673,7 +681,9 @@ const isFirstOwnedMonth =
     const loanDate = new Date(calendarDate);
 
     let interest = balance * monthlyRate;
-    let principalPaid = 0;
+    let scheduledPrincipal = 0;
+let prepaymentPrincipal = 0;
+
     let paymentAmt = 0;
 
     const monthsSinceLoanStart =
@@ -694,24 +704,26 @@ const isFirstOwnedMonth =
           ? P / remainingPaymentMonths
           : (P * r) / (1 - Math.pow(1 + r, -remainingPaymentMonths));
 
-      principalPaid = Math.max(0, paymentAmt - interest);
-      balance = Math.max(0, balance - principalPaid);
+      scheduledPrincipal = Math.max(0, paymentAmt - interest);
+balance = Math.max(0, balance - scheduledPrincipal);
+
     }
 
     const eventKey = monthKeyFromDate(loanDate);
     const monthEvents = prepayMap[eventKey] || [];
 
     let prepaymentThisMonth = 0;
-    monthEvents.forEach(e => {
-      const amt = Number(e.amount || 0);
-      if (amt > 0) {
-        const applied = Math.min(balance, amt);
-        prepaymentThisMonth += applied;
-        balance -= applied;
-      }
-    });
+monthEvents.forEach(e => {
+  const amt = Number(e.amount || 0);
+  if (amt > 0) {
+    const applied = Math.min(balance, amt);
+    prepaymentThisMonth += applied;
+    balance -= applied;
+  }
+});
 
-    principalPaid += prepaymentThisMonth;
+prepaymentPrincipal = prepaymentThisMonth;
+
 
 {
   const isOwned = loanDate >= purchaseMonth;
@@ -744,11 +756,15 @@ const isFirstOwnedMonth =
         displayDate: new Date(loanDate.getFullYear(), loanDate.getMonth(), 1),
 
         payment: +paymentAmt.toFixed(2),
-        principalPaid: +principalPaid.toFixed(2),
+        scheduledPrincipal: +scheduledPrincipal.toFixed(2),
+prepaymentPrincipal: +prepaymentPrincipal.toFixed(2),
+principalPaid: +(scheduledPrincipal + prepaymentPrincipal).toFixed(2),
+
+prepayment: +prepaymentPrincipal.toFixed(2),
+
         interest: +interest.toFixed(2),
         balance: +balance.toFixed(2),
 
-        prepayment: +prepaymentThisMonth.toFixed(2),
         accruedInterest: 0,
 
         feeThisMonth: +feeThisMonth.toFixed(2),
