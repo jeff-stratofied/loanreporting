@@ -3689,7 +3689,7 @@ if (!monthly.has(key)) {
 monthly.set(key, { date: d, contributions: [] });
 }
 
-const principalPaid = Number(r.principalPaid ?? 0);
+const principalPaid = Number(r.monthlyPrincipal ?? 0);
 const interestPaid  = Number(r.interestPaid ?? r.interest ?? 0);
 const feeThisMonth  = Number(r.feeThisMonth ?? 0);
 
