@@ -851,6 +851,14 @@ export function buildPortfolioViews(loansWithAmort) {
   const TODAY = new Date();
   const nextMonthDate = new Date(TODAY.getFullYear(), TODAY.getMonth() + 1, 1);
 
+function getTotalPrincipalPaid(r) {
+  return (
+    Number(r.principalPaid ?? 0) +
+    Number(r.prepaymentPrincipal ?? 0)
+  );
+}
+
+  
   // ----------------------------------------------
   // 1) Next-Month Expected Income (Option A)
   // ----------------------------------------------
@@ -924,7 +932,7 @@ export function buildPortfolioViews(loansWithAmort) {
 .map(r => {
   // accumulate realized components
   cumInterest  += r.interest;
-  cumPrincipal += r.principalPaid;
+  cumPrincipal += getTotalPrincipalPaid(r);
 
   const feeThisMonth = Number(r.feeThisMonth ?? 0);
   cumFees += feeThisMonth;
@@ -986,7 +994,7 @@ loansWithAmort.forEach(loan => {
     const owned = r.loanDate >= purchase;
 
     // suppress earnings pre-ownership
-    const principal = owned ? r.principalPaid : 0;
+    const principal = owned ? getTotalPrincipalPaid(r) : 0;
     const interest  = owned ? r.interest       : 0;
     const fees      = owned ? Number(r.feeThisMonth ?? 0) : 0;
 
