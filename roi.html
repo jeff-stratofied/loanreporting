@@ -1723,7 +1723,9 @@ if (key === "ownedPct") {
   
   // Helper: ROI to-date (single source of truth)
   const roiToDate = (loan) => {
-    const e = getRoiEntryAsOfMonth(loan, KPI_CURRENT_MONTH);
+    const month = normalizeToMonthStart(KPI_CURRENT_MONTH);
+const e = getRoiEntryAsOfMonth(loan, month);
+
     return e && Number.isFinite(+e.roi) ? +e.roi : -Infinity;
   };
 
@@ -3297,8 +3299,11 @@ function renderLoanTableROI(list = currentLoans) {
       : 0;
 
     // 🔑 ROI TO DATE
-    const roiPct =
-      (getRoiEntryAsOfMonth(loan, KPI_CURRENT_MONTH)?.roi || 0) * 100;
+    const month = normalizeToMonthStart(KPI_CURRENT_MONTH);
+
+const roiPct =
+  (getRoiEntryAsOfMonth(loan, month)?.roi || 0) * 100;
+
 
     tr.innerHTML = `
       <td>${loan.id}</td>
@@ -3431,7 +3436,7 @@ function renderLoanGrid(loans) {
       <div class="chart-wrap">
         <div class="mini-label">
           ROI ${(
-            (getRoiEntryAsOfMonth(loan, KPI_CURRENT_MONTH)?.roi || 0) * 100
+            (getRoiEntryAsOfMonth(loan, normalizeToMonthStart(KPI_CURRENT_MONTH))?.roi || 0) * 100
           ).toFixed(2)}%
         </div>
 
@@ -3529,7 +3534,7 @@ function renderLoanGrid(loans) {
       <td>${loan.termYears ?? ""}</td>
       <td>${loan.graceYears ?? ""}</td>
       <td>${(
-  (getRoiEntryAsOfMonth(loan, KPI_CURRENT_MONTH)?.roi || 0) * 100
+  (getRoiEntryAsOfMonth(loan, normalizeToMonthStart(KPI_CURRENT_MONTH))?.roi || 0) * 100
 ).toFixed(2)}%</td>
 
     `;
@@ -3761,7 +3766,7 @@ async function initROI() {
   // ==================================================
   const roiValues = currentLoans.map(l => {
     const e =
-      getRoiEntryAsOfMonth(l, KPI_CURRENT_MONTH) ??
+      getRoiEntryAsOfMonth(l, normalizeToMonthStart(KPI_CURRENT_MONTH)) ??
       { roi: 0, loanValue: l.purchasePrice };
     return e?.roi ?? 0;
   });
@@ -3953,7 +3958,7 @@ function populateROILoanTable() {
 
   tbody.innerHTML = loans.map(l => {
     const roiEntry =
-      getRoiEntryAsOfMonth(l, KPI_CURRENT_MONTH) ??
+      getRoiEntryAsOfMonth(l, normalizeToMonthStart(KPI_CURRENT_MONTH)) ??
       { roi: 0, loanValue: l.purchasePrice };
 
     let matStr = '';
@@ -4040,7 +4045,7 @@ function populateProjectedROILoanTable() {
 
   tbody.innerHTML = loans.map(l => {
     const roiEntry =
-      getRoiEntryAsOfMonth(l, KPI_CURRENT_MONTH) ??
+      getRoiEntryAsOfMonth(l, normalizeToMonthStart(KPI_CURRENT_MONTH)) ??
       { roi: 0, loanValue: l.purchasePrice };
 
     let matStr = '';
